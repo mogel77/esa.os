@@ -95,7 +95,7 @@ class PageLicense(PageBasepage):        # ohne Kennung
         if not exists(self.config["eddir"]["path"]): return
         self.config["user"]["license"] = "yes"
         with open(r"config.ini", 'w') as configfile: self.config.write(configfile)
-class PageDownloads(PageBasepage):
+class PageDownloads(PageBasepage):      # U
     uds = [
                 " _  _  ____  ____   __  ____  ____    ____  ____  ____                              ",
                 "/ )( \(  _ \(    \ / _\(_  _)(  __)  (    \(  __)(  _ \                             ",
@@ -189,11 +189,6 @@ class PageDownloads(PageBasepage):
         # und merken fürs spielen
         self.gamedata["stations"] = j_stations
         self.config["pages"]["activepage"] = "0"
-
-
-
-
-
 class PageSettings(PageBasepage):       # 0
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
@@ -258,6 +253,11 @@ class PageSettings(PageBasepage):       # 0
                 self.config["user"]["homey"] = "72.46875"
                 self.config["user"]["homez"] = "-20.65625"
         self.update()
+
+
+
+
+
 class PageCargo(PageBasepage):          # 1
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
@@ -516,7 +516,10 @@ class PageMissions(PageBasepage):       # 3
                 minutes = s // 60
                 seconds = s - (minutes * 60)
                 expired = "{:02}h{:02}m".format(int(hours), int(minutes))
-                self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", m["DestinationSystem"], m["DestinationStation"]))
+                if "DestinationStation" in m:
+                    self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", m["DestinationSystem"], m["DestinationStation"]))
+                else:
+                    self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", m["DestinationSystem"], m["DestinationSettlement"]))
             else:
                 self.print(line * 2 + 1, 2, "{0:>10}   {1}".format("", m["Faction"]))
             self.print(line * 2 + 0, 2, "{0:>10}   {1}".format(expired, m["LocalisedName"]))
