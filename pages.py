@@ -516,10 +516,13 @@ class PageMissions(PageBasepage):       # 3
                 minutes = s // 60
                 seconds = s - (minutes * 60)
                 expired = "{:02}h{:02}m".format(int(hours), int(minutes))
-                if "DestinationStation" in m:
-                    self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", m["DestinationSystem"], m["DestinationStation"]))
+                if "DestinationSystem" in m:
+                    if "DestinationStation" in m:
+                        self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", m["DestinationSystem"], m["DestinationStation"]))
+                    else:
+                        self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", m["DestinationSystem"], m["DestinationSettlement"]))
                 else:
-                    self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", m["DestinationSystem"], m["DestinationSettlement"]))
+                    self.print(line * 2 + 1, 2, "{0:>10}   Bodenmission".format(" "))
             else:
                 self.print(line * 2 + 1, 2, "{0:>10}   {1}".format("", m["Faction"]))
             self.print(line * 2 + 0, 2, "{0:>10}   {1}".format(expired, m["LocalisedName"]))
