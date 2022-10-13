@@ -127,8 +127,6 @@ class PageDownloads(PageBasepage):      # U
         self.screen.clear()
         for i in range(0, len(self.uds)): self.print(i + 2, 5, self.uds[i])
         self.screen.refresh()
-        #self.print(15, 5, "- download der Commodities")
-        #check4download("commodities")
         self.printline(13, 5, "> download galaxy.gz \"https://files.egn/galaxy.gz\"")
         self.download("galaxy_gz")
         self.printline(14, 5, "> gzip -u galaxy.gz")
@@ -188,6 +186,8 @@ class PageDownloads(PageBasepage):      # U
         os.remove(self.config["localnames"]["galaxy_jsonl"])
         # und merken fürs spielen
         self.gamedata["stations"] = j_stations
+        self.screen.clear()
+        self.screen.refresh()
         self.config["pages"]["activepage"] = "0"
 class PageSettings(PageBasepage):       # 0
     def __init__(self, config, gamedata):
