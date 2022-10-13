@@ -287,22 +287,22 @@ class PageCargo(PageBasepage):          # 1
         self.limpetcount = 0
         self.screen.clear()
         if len(self.gamedata["cargo"]) > 1: # mehr als genug Fracht
-            self.gamedata["logger"].info("mehr als genug Fracht")
+            #self.gamedata["logger"].info("mehr als genug Fracht")
             self.update_cargo()
         else:
-            self.gamedata["logger"].info("leer, Drohnen oder schnöde Fracht - also 0x oder 1x Fracht")
+            #self.gamedata["logger"].info("leer, Drohnen oder schnöde Fracht - also 0x oder 1x Fracht")
             if len(self.gamedata["cargo"]) == 0:
                 self.gamedata["logger"].info("ist leer")
                 self.update_clear()
             else: # 1x Fracht - normal oder Drohnen
                 limpets = self.gamedata["cargo"][0]
                 if limpets["Name"] == "drones":
-                    self.gamedata["logger"].info("nur Drohnen vorhanden")
+                    #self.gamedata["logger"].info("nur Drohnen vorhanden")
                     self.cargouse = limpets["Count"]
                     self.limpetcount = self.cargouse
                     self.update_clear() # erstmal so informieren
                 else:
-                    self.gamedata["logger"].info("x Fracht")
+                    #self.gamedata["logger"].info("x Fracht")
                     self.update_cargo()
 
         self.showCapacity()
@@ -315,7 +315,7 @@ class PageCargo(PageBasepage):          # 1
         self.screen.refresh()
         self.screen.clear()
         playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
-        marge_total = 0
+        self.marge_total = 0
         stations = self.gamedata["stations"]
         itemnumber = 0
         for item in cargo:
@@ -362,7 +362,7 @@ class PageCargo(PageBasepage):          # 1
                     cargo_distance = "{:6.1f}".format(maxdistance) + "ly"
                     cargo_market = maxmarket["name"]
                     line2 = "{0:14}    {1:3}  {2:4.1f}ly {3} ({4})".format(" ", " ", maxdistance, cargo_system, cargo_market)
-                marge_total += fullmarge
+                self.marge_total += fullmarge
             else:
                 if not "MissionID" in item:
                     missionitem = False
@@ -373,7 +373,7 @@ class PageCargo(PageBasepage):          # 1
                         line2 = "{0:14}    {1:3}  >> mögliche Fracht für eine Liefer-Mission".format(" ", " ") # , maxdistance, cargo_system, cargo_market)
                     else:
                         line2 = "{0:14}    {1:3}  innerhalb von {2:4.1f}ly nicht verkaufbar".format(" ", " ", float(self.config["distances"]["systems"]))
-                    marge_total += fullmarge
+                    self.marge_total += fullmarge
                 else:
                     mission = self.getMission(item["MissionID"])
                     if mission is None:
@@ -387,9 +387,6 @@ class PageCargo(PageBasepage):          # 1
             self.print(itemnumber * 2 + 1, 5, line2)
             itemnumber += 1
             self.screen.refresh()
-        self.print(itemnumber * 2 + 0, 5, "----------------")
-        self.print(itemnumber * 2 + 1, 5, "{0:>14}".format("{:,}".format(marge_total)) + "cr")
-        self.print(itemnumber * 2 + 2, 5, "================")
     def showCapacity(self):
         percent = (self.cargouse / self.cargomax) * 100.0
         filler = ""
@@ -401,6 +398,7 @@ class PageCargo(PageBasepage):          # 1
         self.print(21, 2, "[{0}]".format(filler))
         self.print(20, 2, "{0} Drohnen".format(self.limpetcount))
         self.print(20, 95, "{0:>3} / {1:>3}".format(self.cargomax - self.cargouse, self.cargomax))
+        self.print(20, 35, "{0:^20}".format("{0:,}cr".format(self.marge_total)))
 class PageRoute(PageBasepage):          # 2
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
@@ -430,7 +428,7 @@ class PageRoute(PageBasepage):          # 2
         oldpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
         position = 0
         jumps = 0
-        disttotal = 0
+        self.disttotal = 0
         found = False
         lastsystem = None
         self.routestep = 0
@@ -445,27 +443,18 @@ class PageRoute(PageBasepage):          # 2
             distance = math.dist(oldpos, system["StarPos"])
             name = system["StarSystem"]
             startype = system["StarClass"]
-            if (position < 15):
+            if (position < 18):
                 if not startype in fuelstar: startype = "!"
                 if system["StarClass"][0] == "D": startype = "*"
                 self.print(position, 5, "{2}   {0:6.1f}ly   {1}".format(distance, name, startype))
             else:
-                self.print(15, 5, "{0:8} {1}   insgesamt {2} Sprünge".format(" ", "...", len(route)))
+                self.print(18, 5, "{0:8} {1}   insgesamt {2} Sprünge".format(" ", "...", len(route)))
             oldpos = system["StarPos"]
-            disttotal += distance
+            self.disttotal += distance
             position += 1           # Position für die Ausgabe
             jumps += 1              # Anzahl der noch vorhandenen Sprünge
             lastsystem = system
         if position > 16: position = 16
-        self.print(position + 0, 8, "---------")
-        if not lastsystem is None:
-            if position < 16:
-                self.print(position + 1, 8, "{0:>7.1f}ly".format(disttotal))
-            else:
-                self.print(position + 1, 8, "{0:>7.1f}ly   bis {1}".format(disttotal, lastsystem["StarSystem"]))
-        else:
-            self.print(position + 1, 8, "{0:>7.1f}ly".format(disttotal))
-        self.print(position + 2, 8, "=========")
         self.screen.refresh()
     def showProgress(self):
         routemax = len(self.gamedata["route"])
@@ -479,6 +468,7 @@ class PageRoute(PageBasepage):          # 2
         self.print(21, 2, "[{0}]".format(filler))
         self.print(20, 2, "{0}".format(self.gamedata["route"][0]["StarSystem"]))
         self.print(20, 74, "{0:>30}".format(self.gamedata["route"][routemax - 1]["StarSystem"]))
+        self.print(20, 35, "{0:^20}".format("{0:.1f}ly".format(self.disttotal)))
 class PageMissions(PageBasepage):       # 3
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
