@@ -56,7 +56,7 @@ gamedata["status"] = [ "", "", "", "", "" ]
 
 gamedata["logger"] = logging.getLogger("esaos")
 hdlr = logging.FileHandler("esaos.log")
-hdlr.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+hdlr.setFormatter(logging.Formatter('%(message)s'))
 gamedata["logger"].addHandler(hdlr)
 gamedata["logger"].setLevel(logging.DEBUG)
 gamedata["logger"].info("Startup")
@@ -93,6 +93,13 @@ class MyFileHandler(FileSystemEventHandler):
     def on_modified(self,  event):
         if not event.src_path.endswith(".log"): return
         if event.src_path != self.oldlog: self.openLogfile(event.src_path)
+        try:
+            gamedata["event"] = event
+            self.secureDispatch(event)
+        except Exception as ex:
+            gamedata["logger"].error("{0}".format(ex))
+            gamedata["logger"].error(">>> " + json.dumps(gamedata["event"])) # das wurde "gesendet"
+    def secureDispatch(self, event):
         while self.has_another_line(self.logfile):
             global winevents, gamedata, winmenu
             entry = json.loads(self.logfile.readline())
@@ -100,6 +107,7 @@ class MyFileHandler(FileSystemEventHandler):
             if entry["event"] == "Shutdown": Event_Shutdown(entry)
             if entry["event"] == "SquadronStartup": Event_SquadronStartup(entry)
             if entry["event"] == "LoadGame": Event_LoadGame(entry)
+            if entry["event"] == "Resurrect": Event_Resurrect(entry)
             if entry["event"] == "NavRoute": Event_NavRoute(entry)
             if entry["event"] == "NavRouteClear": Event_NavRouteClear(entry)
             if entry["event"] == "FSDTarget": Event_FSDTarget(entry)
@@ -140,10 +148,24 @@ class MyFileHandler(FileSystemEventHandler):
             if entry["event"] == "SellExplorationData": Event_SellExplorationData(entry)
             if entry["event"] == "ShipyardBuy": Event_ShipyardBuy(entry)
             if entry["event"] == "ShipyardSell": Event_ShipyardSell(entry)
+            if entry["event"] == "ShipyardTransfer": Event_ShipyardTransfer(entry)
             if entry["event"] == "ModuleBuy": Event_ModuleBuy(entry)
             if entry["event"] == "ModuleSell": Event_ModuleSell(entry)
             if entry["event"] == "ModuleSellRemote": Event_ModuleSell(entry)
+            if entry["event"] == "ModuleStore": Event_ModuleStore(entry)
+            if entry["event"] == "BuyExplorationData": Event_BuyExplorationData(entry)
+            if entry["event"] == "BuyTradeData": Event_BuyTradeData(entry)
+            if entry["event"] == "BuyAmmo": Event_BuyAmmo(entry)
+            if entry["event"] == "CrewHire": Event_CrewHire(entry)
+            if entry["event"] == "FetchRemoteModule": Event_FetchRemoteModule(entry)
+            if entry["event"] == "RefuelAll": Event_RefuelAll(entry)
+            if entry["event"] == "RefuelPartial": Event_RefuelPartial(entry)
+            if entry["event"] == "RepairAll": Event_RepairAll(entry)
+            if entry["event"] == "RestockVehicle": Event_RestockVehicle(entry)
+            if entry["event"] == "PowerplayFastTrack": Event_PowerplayFastTrack(entry)
             winmenu.update()
+
+
 
 def Event_Shutdown(entry):
     tools.saveConfig(config, gamedata)
@@ -159,7 +181,8 @@ def Event_LoadGame(entry):
     config["user"]["loan"] = str(entry["Loan"])
     with open(r"config.ini", 'w') as configfile: config.write(configfile)
     winheader.update()
-
+def Event_Resurrect(entry):
+    handleCreditsSub("Cost", entry)
 def Event_NavRoute(entry):
     autoPage(2)
 def Event_NavRouteClear(entry):
@@ -167,7 +190,19 @@ def Event_NavRouteClear(entry):
     # { "timestamp":"2022-10-08T12:59:46Z", "event":"NavRoute" }
     gamedata["route"] = [] # löschen -damit FSDJump nicht wieder die leere Route aufruft
     if len(gamedata["cargo"]) > 0:
-        autoPage(1)
+        only = False
+        for fracht in gamedata["cargo"]:
+            if fracht["Name"].casefold() == "drones": only = True
+        if len(gamedata["cargo"]) > 1: only = False # noch was anderes als Drohnen
+        if only == True:
+            # nur dronen im Frachtraum
+            if len(gamedata["missions"]) > 0:
+                # bei keinen Missionen, dann doch das Cargo
+                autoPage(3)
+            else:
+                autoPage(1)
+        else:
+            autoPage(1) # mehr als nur dronen
     else:
         if len(gamedata["missions"]) == 0:
             # bei keinen Missionen, dann doch das Cargo
@@ -391,7 +426,7 @@ def Event_MissionCompleted(event):
                 for m in gamedata["missions"]:
                     out.write(json.dumps(m) + '\n')
             break
-    handleMoneyAdd("Reward", event)
+    handleCreditsAdd("Reward", event)
     pageManager()
 
 def Event_LeaveBody(entry):
@@ -457,41 +492,70 @@ def Event_MiningRefined(entry):
     for i in range(0, 4): gamedata["status"][i] = ""
     winstatus.update()
 
-def handleMoneyAdd(key, transaction):
+def handleCreditsAdd(key, transaction):
     if key in transaction:
         value = int(config["user"]["credits"]) + transaction[key]
         config["user"]["credits"] = str(value)
-    gamedata["logger"].info("MoneyAdd: Key {0} nicht gefunden".format(key))
+    else:
+        j = json.dumps(transaction)
+        gamedata["logger"].info("MoneyAdd: Key '{0}' nicht gefunden -> {1}".format(key, j))
     winheader.update()
-def handleMoneySub(key, transaction):
+def handleCreditsSub(key, transaction):
     if key in transaction:
         value = int(config["user"]["credits"]) - transaction[key]
         config["user"]["credits"] = str(value)
-    gamedata["logger"].info("MoneySub: Key {0} nicht gefunden".format(key))
+    else:
+        j = json.dumps(transaction)
+        gamedata["logger"].info("MoneySub: Key '{0}' nicht gefunden -> {1}".format(key, j))
     winheader.update()
 def Event_MarketBuy(entry):
-    handleMoneySub("TotalCost", entry)
+    handleCreditsSub("TotalCost", entry)
 def Event_MarketSell(entry):
-    handleMoneyAdd("TotalSale", entry)
+    handleCreditsAdd("TotalSale", entry)
 def Event_Repair(entry):
-    handleMoneySub("Cost", entry)
+    handleCreditsSub("Cost", entry)
 def Event_BuyDrones(entry):
-    handleMoneySub("TotalCost", entry)
+    handleCreditsSub("TotalCost", entry)
 def Event_SellDrones(entry):
-    handleMoneySub("TotalSale", entry)
+    handleCreditsSub("TotalSale", entry)
 def Event_SellExplorationData(entry):
-    handleMoneyAdd("TotalEarnings", entry)
+    handleCreditsAdd("TotalEarnings", entry)
 def Event_ShipyardBuy(entry):
-    handleMoneySub("ShipPrice", entry)
+    handleCreditsSub("ShipPrice", entry)
+    handleCreditsAdd("SellPrice", entry)   # falls das aktuelle Schiff gleich verkauft wurde
 def Event_ShipyardSell(entry):
-    handleMoneyAdd("ShipPrice", entry)
+    handleCreditsAdd("ShipPrice", entry)
+def Event_ShipyardTransfer(entry):
+    handleCreditsSub("TransferPrice", entry)
 def Event_ModuleBuy(entry):
-    handleMoneySub("BuyPrice", entry)
+    handleCreditsSub("BuyPrice", entry)
     # bei einem Kauf & Verkauf, dann landet alles in einem Event
-    handleMoneySub("SellPrice", entry)
+    handleCreditsSub("SellPrice", entry)
 def Event_ModuleSell(entry):
-    handleMoneyAdd("SellPrice", entry)
-
+    # auch ModuleSellRemote
+    handleCreditsAdd("SellPrice", entry)
+def Event_ModuleStore(entry):
+    handleCreditsSub("Cost", entry)
+def Event_BuyExplorationData(entry):
+    handelCreditsSub("Cost", entry)
+def Event_BuyTradeData(entry):
+    handleCreditsSub("Cost", entry)
+def Event_BuyAmmo(entry):
+    handleCreditsSub("Cost", entry)
+def Event_CrewHire(entry):
+    handleCreditsSub("Cost", entry)
+def Event_FetchRemoteModule(entry):
+    handleCreditsSub("TransferCost", entry)
+def Event_RefuelAll(entry):
+    handleCreditsSub("Cost", entry)
+def Event_RefuelPartial(entry):
+    handleCreditsSub("Cost", entry)
+def Event_RepairAll(entry):
+    handleCreditsSub("Cost", entry)
+def Event_RestockVehicle(entry):
+    handleCreditsSub("Cost", entry)
+def Event_PowerplayFastTrack(entry):
+    handleCreditsSub("Cost", entry)
 
 
 
@@ -520,6 +584,19 @@ def autoPage(page):
     pageManager()
 
 def pageManager():
+    if config["pages"]["events"] == "yes":
+        pageManager_raw()       # debug-meldungen und Fehler des Programms
+    else:
+        pageManager_catch()     # alles schön verstecken - hoffentlich
+
+def pageManager_catch():
+    try:
+        pageManager_raw()
+    except Exception as ex:
+        gamedata["logger"].error("{0}".format(ex))
+        gamedata["logger"].error("!!! " + json.dumps(gamedata["event"])) # das wurde "gesendet"
+
+def pageManager_raw():
     global config
     global pagecargo, pageroute, pagesettings,  pagemissions, pagestoredmodules, pagesaasignals, pagelicense, pageshiphangar, pageshipoutfit, pageasteroid, pagedownloads
     page = config["pages"]["activepage"]

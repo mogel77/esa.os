@@ -84,8 +84,8 @@ def updateConfig():
 
     # Seitenmanagement
     checkEntry('pages', 'activepage','1')             # aktive Seite
-    checkEntry('pages', 'autopage','no')              # later - automatisches Wechseln der Seiten bei passendem Event
-    checkEntry('pages', 'events', 'yes')              # debug-Ausgabe
+    checkEntry('pages', 'autopage','yes')             # later - automatisches Wechseln der Seiten bei passendem Event
+    checkEntry('pages', 'events', 'no')              # debug-Ausgabe - oder auch knallen der Exception (also nicht verstecken)
 
     # und dann schreiben
     with open(r"config.ini", 'w') as configfile:
