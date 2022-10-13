@@ -280,6 +280,7 @@ class PageCargo(PageBasepage):          # 1
 
     def update(self):
         self.cargouse = 0
+        self.marge_total = 0
         if len(self.gamedata["stored"]["outfit"]) > 0:
             self.cargomax = self.gamedata["stored"]["outfit"]["CargoCapacity"]
         else:
@@ -304,7 +305,6 @@ class PageCargo(PageBasepage):          # 1
                 else:
                     #self.gamedata["logger"].info("x Fracht")
                     self.update_cargo()
-
         self.showCapacity()
         self.screen.refresh()
     def update_clear(self):
@@ -315,7 +315,6 @@ class PageCargo(PageBasepage):          # 1
         self.screen.refresh()
         self.screen.clear()
         playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
-        self.marge_total = 0
         stations = self.gamedata["stations"]
         itemnumber = 0
         for item in cargo:
@@ -412,6 +411,7 @@ class PageRoute(PageBasepage):          # 2
     def update(self):
         self.loadRoute()
         self.screen.clear()
+        self.disttotal = 0
         if len(self.gamedata["route"]) > 0:
             self.update_route()
             self.showProgress()
@@ -428,7 +428,6 @@ class PageRoute(PageBasepage):          # 2
         oldpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
         position = 0
         jumps = 0
-        self.disttotal = 0
         found = False
         lastsystem = None
         self.routestep = 0
