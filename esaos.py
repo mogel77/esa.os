@@ -54,9 +54,10 @@ gamedata["status"] = [ "", "", "", "", "" ]
 
 
 
+if os.path.exists("esaos.log"): os.remove("esaos.log")
 gamedata["logger"] = logging.getLogger("esaos")
 hdlr = logging.FileHandler("esaos.log")
-hdlr.setFormatter(logging.Formatter('%(message)s'))
+hdlr.setFormatter(logging.Formatter('%(levelname)s > %(message)s'))
 gamedata["logger"].addHandler(hdlr)
 gamedata["logger"].setLevel(logging.DEBUG)
 gamedata["logger"].info("Startup")
@@ -94,15 +95,16 @@ class MyFileHandler(FileSystemEventHandler):
         if not event.src_path.endswith(".log"): return
         if event.src_path != self.oldlog: self.openLogfile(event.src_path)
         try:
-            gamedata["event"] = event
+            gamedata["event"] = None
             self.secureDispatch(event)
         except Exception as ex:
-            gamedata["logger"].error("{0}".format(ex))
-            gamedata["logger"].error(">>> " + json.dumps(gamedata["event"])) # das wurde "gesendet"
+            gamedata["logger"].error("{0}".format(ex), exc_info=True)
+            if not gamedata["event"] is None: gamedata["logger"].error(">>> {0}".json.dumps(gamedata["event"]))
     def secureDispatch(self, event):
         while self.has_another_line(self.logfile):
             global winevents, gamedata, winmenu
             entry = json.loads(self.logfile.readline())
+            gamedata["event"] = entry
             addMessage("debug", "EVENT: " + entry["event"])
             if entry["event"] == "Shutdown": Event_Shutdown(entry)
             if entry["event"] == "SquadronStartup": Event_SquadronStartup(entry)
@@ -189,26 +191,28 @@ def Event_NavRouteClear(entry):
     # ACHTUNG - Event kommt vor FSDTarget
     # { "timestamp":"2022-10-08T12:59:46Z", "event":"NavRoute" }
     gamedata["route"] = [] # löschen -damit FSDJump nicht wieder die leere Route aufruft
-    if len(gamedata["cargo"]) > 0:
-        only = False
-        for fracht in gamedata["cargo"]:
-            if fracht["Name"].casefold() == "drones": only = True
-        if len(gamedata["cargo"]) > 1: only = False # noch was anderes als Drohnen
-        if only == True:
-            # nur dronen im Frachtraum
-            if len(gamedata["missions"]) > 0:
-                # bei keinen Missionen, dann doch das Cargo
-                autoPage(3)
+    autoPage(getPrioPage())
+    def veraltet():
+        if len(gamedata["cargo"]) > 0:
+            only = False
+            for fracht in gamedata["cargo"]:
+                if fracht["Name"].casefold() == "drones": only = True
+            if len(gamedata["cargo"]) > 1: only = False # noch was anderes als Drohnen
+            if only == True:
+                # nur dronen im Frachtraum
+                if len(gamedata["missions"]) > 0:
+                    # bei keinen Missionen, dann doch das Cargo
+                    autoPage(3)
+                else:
+                    autoPage(1)
             else:
+                autoPage(1) # mehr als nur dronen
+        else:
+            if len(gamedata["missions"]) == 0:
+                # bei keinen Missionen, dann doch das Cargo
                 autoPage(1)
-        else:
-            autoPage(1) # mehr als nur dronen
-    else:
-        if len(gamedata["missions"]) == 0:
-            # bei keinen Missionen, dann doch das Cargo
-            autoPage(1)
-        else:
-            autoPage(3)
+            else:
+                autoPage(3)
 def Event_FSDTarget(entry): # das ist das nächste Ziel zum Sprung
     # { "timestamp":"2022-10-08T12:59:46Z", "event":"FSDTarget", "Name":"Sharru Sector YO-A b0", "SystemAddress":671760000393, "StarClass":"M", "RemainingJumpsInRoute":8 }
     pass
@@ -253,7 +257,10 @@ def Event_FSDJump(entry):
     gamedata["status"][4] = ""
     winheader.update()
     winstatus.update()
-    if len(gamedata["route"]) > 0: autoPage(2)
+    if len(gamedata["route"]) > 0:
+        autoPage(2)
+    else:
+        autoPage(getPrioPage())
 def Event_JetConeBoost(entry):
     gamedata["status"][0] = "   __  ____  ____     ____   __    __   ____  ____ "
     gamedata["status"][1] = " _(  )(  __)(_  _)___(  _ \ /  \  /  \ / ___)(_  _)"
@@ -578,6 +585,50 @@ def addMessage(channel, message):
 
 
 
+
+
+def getPrioPage():
+    def prioMission():
+        #  Priorität hat die Mission-Seite
+        if len(gamedata["missions"]) > 0:
+            return "3"
+        else:
+            if len(gamedata["cargo"]) > 0:
+                only = False
+                for fracht in gamedata["cargo"]:
+                    if fracht["Name"].casefold() == "drones": only = True
+                if len(gamedata["cargo"]) > 1: only = False # noch was anderes als Drohnen
+                if only == True:
+                    # nur dronen im Frachtraum
+                    return "3"
+                else:
+                    return "1"
+            else:
+                # keine Fracht, also doch die Missionen
+                return "3"
+    def prioCargo():
+        # Priorität hat die Cargo-Seite
+        if len(gamedata["cargo"]) > 0:
+            only = False
+            for fracht in gamedata["cargo"]:
+                if fracht["Name"].casefold() == "drones": only = True
+            if len(gamedata["cargo"]) > 1: only = False # noch was anderes als Drohnen
+            if only == True:
+                # nur dronen im Frachtraum
+                if len(gamedata["missions"]) > 0:
+                    return "3"
+                else:
+                    return "1"
+            else:
+                return "1"
+        else:
+            if len(gamedata["missions"]) == 0:
+                return "1"
+            else:
+                return "3"
+    # TODO Konfigurierbar machen
+    # -- return prioCargo()
+    return prioMission()
 def autoPage(page):
     pageManager.lastPage = "?"
     if config["pages"]["autopage"] == "yes": config["pages"]["activepage"] = str(page)
