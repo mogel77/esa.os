@@ -510,6 +510,7 @@ class PageMissions(PageBasepage):       # 3
                         self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", m["DestinationSystem"], m["DestinationStation"]))
                     else:
                         self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", m["DestinationSystem"], m["DestinationSettlement"]))
+                    if m["DestinationSystem"] == self.config["user"]["system"]: self.print(line * 2 + 1, 13, ">")
                 else:
                     self.print(line * 2 + 1, 2, "{0:>10}   Bodenmission".format(" "))
             else:
