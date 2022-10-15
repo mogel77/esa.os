@@ -626,8 +626,7 @@ def getPrioPage():
                 return "1"
             else:
                 return "3"
-    # TODO Konfigurierbar machen
-    # -- return prioCargo()
+    if config["pages"]["priopage"] == "cargo": return prioCargo()
     return prioMission()
 def autoPage(page):
     pageManager.lastPage = "?"

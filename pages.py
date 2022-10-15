@@ -217,6 +217,7 @@ class PageSettings(PageBasepage):       # 0
         self.print(5, 5, self.formatSetting("J", self.config["distances"]["systems"], "max. Entfernung der Systeme für Verkauf (Ly)"))
         self.print(6, 5, self.formatSetting("L", self.config["distances"]["stations"], "max. Entfernung der Stationen für Verkauf (Ls)"))
         self.print(7, 5, self.formatSetting("A", self.config["pages"]["autopage"], "automatisch die Seiten umschalten"))
+        self.print(8, 5, self.formatSetting("P", self.config["pages"]["priopage"], "Seite nach dem Ende der Route"))
         self.print(15, 5, self.formatSetting("F", self.config["filter"]["distance"], "Systeme weiter vom Heimatsystem, werden gelöscht/ignoriert (Ly)"))
         self.print(16, 5, self.formatSetting("E", self.config["pages"]["events"], "Events anzeigen (Debug-Funktion)"))
         self.screen.refresh()
@@ -226,6 +227,7 @@ class PageSettings(PageBasepage):       # 0
         if key == "u" or key == "U": self.config["pages"]["activepage"] = "U"
         if key == "e" or key == "E": self.config["pages"]["events"] = self.scrollSetting(self.config["pages"]["events"], [ "yes", "no" ])
         if key == "a" or key == "A": self.config["pages"]["autopage"] = self.scrollSetting(self.config["pages"]["autopage"], [ "yes", "no" ])
+        if key == "p" or key == "P": self.config["pages"]["priopage"] = self.scrollSetting(self.config["pages"]["priopage"], [ "mining", "cargo" ])
         if key == "j" or key == "J": self.config["distances"]["systems"] = self.scrollSetting(self.config["distances"]["systems"], distances)
         if key == "l" or key == "L": self.config["distances"]["stations"] = self.scrollSetting(self.config["distances"]["stations"], distances)
         if key == "f" or key == "F": self.config["filter"]["distance"] = self.scrollSetting(self.config["filter"]["distance"], distances)
