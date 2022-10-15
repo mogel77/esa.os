@@ -2,3 +2,4 @@ config.ini
 daten
 esaos.log
 __pycache__
+*.kate-swp
