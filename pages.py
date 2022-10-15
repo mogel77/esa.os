@@ -349,7 +349,7 @@ class PageCargo(PageBasepage):          # 1
             cargo_price = "{:,}".format(price)
             fullmarge = price * cargo_count
             cargo_marge = "{:,}".format(price * cargo_count)
-            line1 = "{0:>14}cr  {1:3}  {2:30}".format(cargo_marge, cargo_count, cargo_item)
+            line1 = "{0:>14}\u00A2   {1:3}  {2:30}".format(cargo_marge, cargo_count, cargo_item)
             line2 = ""
             if not maxmarket is None:
                 missionitem = False
@@ -399,7 +399,7 @@ class PageCargo(PageBasepage):          # 1
         self.print(21, 2, "[{0}]".format(filler))
         self.print(20, 2, "{0} Drohnen".format(self.limpetcount))
         self.print(20, 95, "{0:>3} / {1:>3}".format(self.cargomax - self.cargouse, self.cargomax))
-        self.print(20, 35, "{0:^20}".format("{0:,}cr".format(self.marge_total)))
+        self.print(20, 35, "{0:^20}".format("{0:,}\u00A2 ".format(self.marge_total)))
 class PageRoute(PageBasepage):          # 2
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
@@ -556,7 +556,7 @@ class PageStoredModules(PageBasepage):  # 4
                 minutes = time // 60
                 seconds = time - (minutes * 60)
                 expired = "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
-                output = "{0:>10,}cr {1:<40} {2:9} {3}".format(cost, name, expired, place)
+                output = "{0:>10,}\u00A2  {1:<40} {2:9} {3}".format(cost, name, expired, place)
             self.print(line, 2, output)
             line += 1
 class PageShipHangar(PageBasepage):     # 5
@@ -589,7 +589,7 @@ class PageShipHangar(PageBasepage):     # 5
             if "Name" in ship: name = ship["Name"]
             value = getDictItem(ship, "Value")
             hot = getDictItem(ship, "Hot")
-            output1 = "{0:>14,}cr   {1:<40} {2}".format(value, name, type)
+            output1 = "{0:>14,}\u00A2    {1:<40} {2}".format(value, name, type)
             output2 = ""
             if "InTransit" in ship:
                 output2 = "{0:>14}     {1:<40}".format("", "- In Transit -")
@@ -603,7 +603,7 @@ class PageShipHangar(PageBasepage):     # 5
                     minutes = time // 60
                     seconds = time - (minutes * 60)
                     expired = "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
-                    output2 = "{0:>14}     Transfer: {2:8} von {3} für {1:,}cr".format("", cost, expired, place)
+                    output2 = "{0:>14}     Transfer: {2:8} von {3} für {1:,}\u00A2 ".format("", cost, expired, place)
                     if time == 0: output2 = "{0:>14}     im lokalem Hanger ({1}) gelagert".format("", place)
                 else:
                     output2 = ""
@@ -743,7 +743,7 @@ class PageSAASignals(PageBasepage):     # 7
             if market is None:
                 output = "{1:>20} {0:>2}x - kein Markt gefunden".format(count, name)
             else:
-                output = "{1:>20} {0:>2}x - {2:>10,}cr ({3:4.1f}ly {4}|{5})".format(count, name, price, maxdistance, market["system"], market["name"])
+                output = "{1:>20} {0:>2}x - {2:>10,}\u00A2  ({3:4.1f}ly {4}|{5})".format(count, name, price, maxdistance, market["system"], market["name"])
             self.print(4 + line, 5, output)
             line += 1
             self.screen.refresh() # nach jeder Zeile - das suchen der preise dauert immer etwas
@@ -823,7 +823,7 @@ class PageAsteroid(PageBasepage):       # 8
             if market is None:
                 output = "{0:>5.1f}% {1:25} - kein Markt gefunden".format(percent, name)
             else:
-                output = "{0:>5.1f}% {1:25} - {2:>10,}cr ({3:4.1f}ly {4}|{5})".format(percent, name, price, maxdistance, market["system"], market["name"])
+                output = "{0:>5.1f}% {1:25} - {2:>10,}\u00A2  ({3:4.1f}ly {4}|{5})".format(percent, name, price, maxdistance, market["system"], market["name"])
             self.print(8 + line, 5, output)
             line += 1
             self.screen.refresh() # nach jeder Zeile - das suchen der preise dauert immer etwas

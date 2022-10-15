@@ -130,11 +130,13 @@ class WinHeader(WinBaseWindow):
         self.dot(5, 42, "+")
         self.dot(5, 19, "+")
 
+        crSymbol = u"\u00A2"
+
         if self.config['user']['squadrank'] == '0':
             self.print(1, 45, self.config["user"]["name"])
         else:
             self.print(1, 45, "{0} - {1} (Rank {2})".format(self.config["user"]["name"], self.config["user"]["squadname"], self.config["user"]["squadrank"]))
-        self.print(2, 45, "{0:,d}cr - [{1}] {2}".format(int(self.config["user"]["credits"]), self.config["user"]["ident"], self.config["user"]["ship"]))
+        self.print(2, 45, "{0:,d}\u00a2 - [{1}] {2}".format(int(self.config["user"]["credits"]), self.config["user"]["ident"], self.config["user"]["ship"]))
 
         pos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
         home = [ float(self.config["user"]["homex"]), float(self.config["user"]["homey"]), float(self.config["user"]["homez"]) ]
