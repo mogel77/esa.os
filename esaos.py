@@ -90,7 +90,7 @@ class MyFileHandler(FileSystemEventHandler):
         try:  # catch OSError in case of a one line file
             self.logfile.seek(0, os.SEEK_END)
         except OSError:
-            logfile.seek(0)
+            self.logfile.seek(0)
         self.config["eddir"]["lastlog"] = newlogpath
         with open(r"config.ini", 'w') as configfile: self.config.write(configfile)
     def on_modified(self,  event):
@@ -101,7 +101,7 @@ class MyFileHandler(FileSystemEventHandler):
             self.secureDispatch(event)
         except Exception as ex:
             gamedata["logger"].error("{0}".format(ex), exc_info=True)
-            if not gamedata["event"] is None: gamedata["logger"].error(">>> {0}".json.dumps(gamedata["event"]))
+            if not gamedata["event"] is None: gamedata["logger"].error(">>> {0}".format(json.dumps(gamedata["event"])))
     def secureDispatch(self, event):
         while self.has_another_line(self.logfile):
             global winevents, gamedata, winmenu
@@ -132,8 +132,9 @@ class MyFileHandler(FileSystemEventHandler):
             if entry["event"] == "Died": Event_GameOver(entry)
             if entry["event"] == "Materials": Event_Materials(entry)
             if entry["event"] == "ShipLocker": Event_ShipLocker(entry)
-            if entry["event"] == "MissionAccepted": Event_MissionAccepted(entry)
             if entry["event"] == "Missions": Event_Missions(entry)
+            if entry["event"] == "MissionAccepted": Event_MissionAccepted(entry)
+            if entry["event"] == "MissionRedirected": Event_MissionRedirected(entry)
             if entry["event"] == "MissionCompleted": Event_MissionCompleted(entry)
             if entry["event"] == "LeaveBody": Event_LeaveBody(entry)
             if entry["event"] == "ApproachBody": Event_ApproachBody(entry)
@@ -406,6 +407,15 @@ def Event_ShipLocker(entry):
         out.write(json.dumps(gamedata["locker"]["consumables"]) + '\n')
         out.write(json.dumps(gamedata["locker"]["data"]) + '\n')
 
+def Event_Missions(entry):
+    found = []
+    # aktive Mission suchen und in found[] packen
+    for mission in gamedata["missions"]:
+        for active in entry["Active"]:
+            if active["MissionID"] == mission["MissionID"]: found.append(mission)
+    gamedata["missions"] = found
+    with open(config["localnames"]["missions"], "w") as out:
+        for m in gamedata["missions"]: out.write(json.dumps(m) + '\n')
 def Event_MissionAccepted(entry):
     # unwichtiges löschen
     temp = json.dumps(entry)
@@ -417,23 +427,24 @@ def Event_MissionAccepted(entry):
         for m in gamedata["missions"]:
             out.write(json.dumps(m) + '\n')
     autoPage(3)
-def Event_Missions(entry):
-    found = []
-    # aktive Mission suchen und in found[] packen
-    for mission in gamedata["missions"]:
-        for active in entry["Active"]:
-            if active["MissionID"] == mission["MissionID"]: found.append(mission)
-    gamedata["missions"] = found
-    with open(config["localnames"]["missions"], "w") as out:
-        for m in gamedata["missions"]: out.write(json.dumps(m) + '\n')
+def Event_MissionRedirected(entry):
+    # { "timestamp":"2022-10-15T13:18:04Z", "event":"MissionRedirected", "MissionID":894845762, "Name":"Mission_Salvage", "NewDestinationStation":"Li Qing Jao", "NewDestinationSystem":"Sol", "OldDestinationStation":"", "OldDestinationSystem":"Avik" }
+    id = entry["MissionID"]
+    for m in gamedata["missions"]:
+        if m["MissionID"] == id:
+            m["DestinationSystem"] = entry["NewDestinationSystem"]
+            m["DestinationStation"] = entry["NewDestinationStation"]
+            with open(config["localnames"]["missions"], "w") as out:
+                for m in gamedata["missions"]: out.write(json.dumps(m) + '\n')
+            break
+    pageManager()
 def Event_MissionCompleted(event):
     id = event["MissionID"]
     for m in gamedata["missions"]:
         if m["MissionID"] == id:
             gamedata["missions"].remove(m)
             with open(config["localnames"]["missions"], "w") as out:
-                for m in gamedata["missions"]:
-                    out.write(json.dumps(m) + '\n')
+                for m in gamedata["missions"]: out.write(json.dumps(m) + '\n')
             break
     handleCreditsAdd("Reward", event)
     pageManager()
@@ -546,7 +557,7 @@ def Event_ModuleSell(entry):
 def Event_ModuleStore(entry):
     handleCreditsSub("Cost", entry)
 def Event_BuyExplorationData(entry):
-    handelCreditsSub("Cost", entry)
+    handleCreditsSub("Cost", entry)
 def Event_BuyTradeData(entry):
     handleCreditsSub("Cost", entry)
 def Event_BuyAmmo(entry):
@@ -567,7 +578,7 @@ def Event_PowerplayFastTrack(entry):
     handleCreditsSub("Cost", entry)
 
 
-
+# { "timestamp":"2022-10-15T13:18:04Z", "event":"MissionRedirected", "MissionID":894845762, "Name":"Mission_Salvage", "NewDestinationStation":"Li Qing Jao", "NewDestinationSystem":"Sol", "OldDestinationStation":"", "OldDestinationSystem":"Avik" }
 
 
 def addMessage(channel, message):
@@ -645,6 +656,7 @@ def pageManager_catch():
     try:
         pageManager_raw()
     except Exception as ex:
+
         gamedata["logger"].error("{0}".format(ex))
         if "event" in gamedata: gamedata["logger"].error("!!! " + json.dumps(gamedata["event"])) # das wurde "gesendet"
 

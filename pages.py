@@ -814,7 +814,7 @@ class PageAsteroid(PageBasepage):       # 8
                     if market is None:
                         market = station
                     else:
-                        neu = self.getPrice(station, signal["Type"])
+                        neu = self.getPrice(station, commodities["Type"])
                         if neu > price:
                             maxdistance = distance
                             market = station
