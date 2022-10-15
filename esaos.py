@@ -27,6 +27,8 @@ config.read('config.ini')
 
 # zusätzliche Dinge zur Laufzeit
 gamedata = {}
+gamedata["stations"] = []
+gamedata["modnames"] = []
 gamedata["cargo"] = []
 gamedata["materials"] = {}
 gamedata["materials"]["raw"] = []
@@ -644,7 +646,7 @@ def pageManager_catch():
         pageManager_raw()
     except Exception as ex:
         gamedata["logger"].error("{0}".format(ex))
-        gamedata["logger"].error("!!! " + json.dumps(gamedata["event"])) # das wurde "gesendet"
+        if "event" in gamedata: gamedata["logger"].error("!!! " + json.dumps(gamedata["event"])) # das wurde "gesendet"
 
 def pageManager_raw():
     global config
@@ -711,7 +713,13 @@ def main(stdsrc):
             gamedata["stations"] = json.load(f)
     else:
         gamedata["logger"].info("keine Stationen vorhanden")
-        gamedata["stations"] = []
+
+    if exists(config["localnames"]["modnames"]):
+        gamedata["logger"].info("Namen der Module werden geladen")
+        with open(config["localnames"]["modnames"], "r") as f:
+            gamedata["modnames"] = json.load(f)
+    else:
+        gamedata["logger"].info("keine Modulnamen vorhanden")
 
     winmenu.update()
     winheader.update()

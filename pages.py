@@ -654,11 +654,22 @@ class PageShipOutfit(PageBasepage):     # 6
                 key = getSlotKey(outfit["Slot"])
                 if key is None: continue
                 slots[key].append(outfit["Item"])
+        def getModule4Item(item):
+            for m in self.gamedata["modnames"]:
+                if item.casefold() == m["ed_symbol"].casefold(): return m
+            return None
         def printSlot(y, x, title, items):
             self.print(y, x, title)
             line = 0
             for item in items:
-                self.print(y + line + 2, x, item)
+                module = getModule4Item(item)
+                if module == None:
+                    self.print(y + line + 2, x, item)
+                else:
+                    clazz = str(module["class"])
+                    rating = str(module["rating"])
+                    name = module["group"]["name"]
+                    self.print(y + line + 2, x, "{0}{1} {2}".format(clazz, rating, name))
                 line += 1
         slots = {}
         slots["weapons"] = []

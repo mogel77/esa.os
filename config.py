@@ -21,6 +21,8 @@ def updateConfig():
 
     # alles nach Daten ..
     if not os.path.exists('daten'): os.makedirs('daten')
+    # ... und Resourcen ...
+    if not os.path.exists('resources'): os.makedirs('resources')
     # .. außer die Config
     config = configparser.ConfigParser()
     config.read('config.ini')
@@ -30,12 +32,13 @@ def updateConfig():
     checkEntry('eddir', 'lastlog', 'unsed')
 
     # Download URLS
-    checkEntry('urls', 'commodities', 'https://edgalaxydata.space/EDDB/dumps/commodities.json')
+    # checkEntry('urls', 'commodities', 'https://edgalaxydata.space/EDDB/dumps/commodities.json')
     checkEntry('urls', 'galaxy_gz', 'https://downloads.spansh.co.uk/galaxy_1day.json.gz')
 
     # Dateinamen nach dem Download bzw. zum Speichern der Daten
+    checkEntry('localnames', 'modnames', 'resources/modnames.json')
     checkEntry('localnames', 'stations', 'daten/stations.json')
-    checkEntry('localnames', 'commodities', 'daten/commodities.json')
+    # checkEntry('localnames', 'commodities', 'daten/commodities.json')
     checkEntry('localnames', 'galaxy_gz', 'daten/galaxy.gz')
     checkEntry('localnames', 'galaxy_json', 'daten/galaxy.json')
     checkEntry('localnames', 'galaxy_jsonl', 'daten/galaxy.jsonl')
@@ -84,6 +87,7 @@ def updateConfig():
 
     # Seitenmanagement
     checkEntry('pages', 'activepage','1')             # aktive Seite
+    checkEntry('pages', 'priopage', 'mining')       # Seite nach einem NavRouteClear (Mining oder Cargo)
     checkEntry('pages', 'autopage','yes')             # later - automatisches Wechseln der Seiten bei passendem Event
     checkEntry('pages', 'events', 'no')              # debug-Ausgabe - oder auch knallen der Exception (also nicht verstecken)
 
