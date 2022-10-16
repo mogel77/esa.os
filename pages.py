@@ -304,7 +304,7 @@ class PageSettings(PageBasepage):       # 0
         self.print(6, 5, self.formatSetting("L", self.config["distances"]["stations"], "max. Entfernung der Stationen für Verkauf (Ls)"))
         self.print(7, 5, self.formatSetting("A", self.config["pages"]["autopage"], "automatisch die Seiten umschalten"))
         self.print(8, 5, self.formatSetting("P", self.config["pages"]["priopage"], "Seite nach dem Ende der Route"))
-        self.print(14, 5, self.formatSetting("M", self.config["pages"]["edmc"], "Autostart von EDMarketConnector"))
+        #self.print(14, 5, self.formatSetting("M", self.config["pages"]["edmc"], "Autostart von EDMarketConnector"))
         self.print(15, 5, self.formatSetting("F", self.config["filter"]["distance"], "Systeme weiter vom Heimatsystem, werden gelöscht/ignoriert (Ly)"))
         self.print(16, 5, self.formatSetting("E", self.config["pages"]["events"], "Events anzeigen (Debug-Funktion)"))
         self.screen.refresh()
@@ -348,7 +348,7 @@ class PageSettings(PageBasepage):       # 0
 
 
 
-class PageCargo_Neu(PageBasepage):          # 1
+class PageCargo(PageBasepage):          # 1
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadCargo()
@@ -456,7 +456,7 @@ class PageCargo_Neu(PageBasepage):          # 1
         self.print(20, 95, "{0:>3} / {1:>3}".format(self.cargomax - self.cargouse, self.cargomax))
         self.print(20, 35, "{0:^20}".format("{0:,}\u00A2 ".format(self.marge_total)))
 
-class PageCargo(PageBasepage):          # 1
+class PageCargo_alt(PageBasepage):          # 1
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadCargo()

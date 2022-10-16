@@ -1,12 +1,12 @@
 import configparser
 import curses
 import os
-import subprocess
 import json
 import sys
 import logging
 import time
 import multiprocessing
+import subprocess
 from curses import wrapper
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -785,12 +785,12 @@ def main(stdsrc):
 
 
 # edmc = Thread(target=startEDMC)
-edmc = multiprocessing.Process(target=startEDMC)
-edmc.start()
+#edmc = multiprocessing.Process(target=startEDMC)
+#edmc.start()
 time.sleep(1)
 
 wrapper(main)
-edmc.kill()
+#edmc.kill()
 # Config sichern, nach dem beenden
 print("speichere Konfiguration")
 tools.saveConfig(config, gamedata)
