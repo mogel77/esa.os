@@ -23,7 +23,11 @@ class PageBasepage:
         self.gamedata = gamedata
     def print(self, posy, posx, content):
         try:
-            self.screen.addstr(posy, posx, content)
+            if len(content) > 0:
+                for i in range(0, len(content)):
+                    if posx + i < curses.COLS - 1: self.screen.addstr(posy, posx + i, content[i])
+            else:
+                self.screen.addstr(posy, posx, "")
         except curses.error:
             pass # ! douh ! - schlucken ist immer doof
     def countDrones(self):
@@ -94,6 +98,7 @@ class PageBasepage:
         return market
     def getNearestPrice(self, itemname):
         # der am nächsten liegende Markt
+        # self.gamedata["logger"].info("suche Item: " + itemname)
         market = None                                           # der verkaufende Markt
         mindistance = float(self.config["distances"]["systems"])   # der Preis des Marktes - dürfte aktuelle nie höher sein
         playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
@@ -123,8 +128,16 @@ class PageBasepage:
     def getMission4Item(self, itemname_localised):
         if len(self.gamedata["missions"]) == 0: return None
         for m in self.gamedata["missions"]:
-            if m["Commodity_Localised"].casefold() == itemname_localised.casefold(): return m
+            if getDictItem(m, "Commoditiy", "Commodity_Localised").casefold() == itemname_localised.casefold(): return m
         return None
+    def getItemFromCargo(self, itemname):
+        if len(self.gamedata["cargo"]) == 0: return None
+        for item in self.gamedata["cargo"]:
+            cargoname = getDictItem(item, "Name", "Name_Localised")
+            if cargoname.casefold() == itemname.casefold(): return item
+        return None
+
+
 
 
 
@@ -535,14 +548,12 @@ class PageMissions(PageBasepage):       # 3
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadMissions()
-
     def loadMissions(self):
         if exists(self.config["localnames"]["missions"]):
             with open(self.config["localnames"]["missions"], "r") as file:
                 for line in file.readlines():
                     mission = json.loads(line)
                     self.gamedata["missions"].append(mission)
-
     def update(self):
         self.screen.clear()
         if len(self.gamedata["missions"]) > 0:
@@ -550,36 +561,72 @@ class PageMissions(PageBasepage):       # 3
         else:
             self.update_clear()
         self.screen.refresh()
-
     def update_clear(self):
         self.print(5, 10, "keine Aufträge vorhanden")
-
+    def getExpiry(self, mission):
+        if "Expiry" in mission:
+            now = datetime.utcnow()
+            exp = datetime.fromisoformat(mission["Expiry"].replace("T", " ").replace("Z", ""))
+            s = (exp - now).seconds
+            hours = s // 3600
+            s = s - (hours * 3600)
+            minutes = s // 60
+            return "{:02}h{:02}m".format(int(hours), int(minutes))
+        return "zeitlos"
     def update_missions(self):
         line = 0
-        for m in self.gamedata["missions"]:
-            # "Expiry": "2022-10-10T16:33:06Z"
-            expired = "zeitlos"
-            if "Expiry" in m:
-                now = datetime.utcnow()
-                exp = datetime.fromisoformat(m["Expiry"].replace("T", " ").replace("Z", ""))
-                s = (exp - now).seconds
-                hours = s // 3600
-                s = s - (hours * 3600)
-                minutes = s // 60
-                seconds = s - (minutes * 60)
-                expired = "{:02}h{:02}m".format(int(hours), int(minutes))
-                if "DestinationSystem" in m:
-                    if "DestinationStation" in m:
-                        self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", m["DestinationSystem"], m["DestinationStation"]))
-                    else:
-                        self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", m["DestinationSystem"], m["DestinationSettlement"]))
-                    if m["DestinationSystem"] == self.config["user"]["system"]: self.print(line * 2 + 1, 13, ">")
-                else:
-                    self.print(line * 2 + 1, 2, "{0:>10}   Bodenmission".format(" "))
-            else:
-                self.print(line * 2 + 1, 2, "{0:>10}   {1}".format("", m["Faction"]))
-            self.print(line * 2 + 0, 2, "{0:>10}   {1}".format(expired, m["LocalisedName"]))
+        for mission in self.gamedata["missions"]:
+            mission_type = mission["Name"].casefold()
+            expired = self.getExpiry(mission)
+            self.gamedata["logger"].info(mission_type + ": " + mission["LocalisedName"]);
+            self.print(line * 2 + 0, 2, "{0:>10}   {1}".format(expired, mission["LocalisedName"]))
+            if mission_type == "mission_collect": self.showCollect(mission, line)
+            if mission_type == "mission_mining": self.showMining(mission, line)
+            if mission_type == "mission_delivery_cooperative": self.showDeliveryCoop(mission, line)
+            if mission_type == "mission_onfoot_collect": self.showFootCollect(mission, line)
+            if mission_type == "mission_salvage": self.showSalvage(mission, line)
+            if mission_type == "mission_courier_service": self.showSalvage(mission, line)
+            if mission_type == "mission_delivery_democracy": self.showSalvage(mission, line)
+            if mission["DestinationSystem"] == self.config["user"]["system"]: self.print(line * 2 + 1, 13, ">")
             line += 1
+            self.screen.refresh()
+    def showSalvage(self, mission, line):
+        self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationStation"]))
+    def showFootCollect(self, mission, line):
+        if "DestinationSystem" in mission:
+            self.showMining(mission, line)
+        else:
+            self.print(line * 2 + 1, 2, "{0:>10}   Bodenmission".format(" "))
+    def showDeliveryCoop(self, mission, line):
+        mission_item = getDictItem(mission, "Commodity", "Commodity_Localised")
+        # self.gamedata["logger"].info("MissionItem: " + mission_item)
+        incargo = self.getItemFromCargo(mission_item)
+#        if incargo is None:
+#            self.print(line * 2 + 1, 2, "{0:>10}   >> abholen {1} ({2})".format(" ", market["system"], market["name"]))
+#        else:
+        if "DestinationStation" in mission:
+            self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationStation"]))
+        else:
+            self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationSettlement"]))
+    def showCollect(self, mission, line):
+        self.showMining(mission, line) # erstmal
+    def showMining(self, mission, line):
+        mission_item = getDictItem(mission, "Commodity", "Commodity_Localised")
+        # self.gamedata["logger"].info("MissionItem: " + mission_item)
+        incargo = self.getItemFromCargo(mission_item)
+        if incargo is None:
+            # market = self.getNearestPrice(mission_item)
+            market = self.getNearestPrice((mission["Commodity"][1:]).replace("_Name;", "").casefold())
+            if not market is None:
+                self.print(line * 2 + 1, 2, "{0:>10}   >> kaufbar bei {1} ({2})".format(" ", market["system"], market["name"]))
+            else:
+                self.print(line * 2 + 1, 2, "{0:>10}   kein passenden Markt gefunden".format(" "))
+        else:
+            if "DestinationStation" in mission:
+                self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationStation"]))
+            else:
+                self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationSettlement"]))
+        if mission["DestinationSystem"] == self.config["user"]["system"]: self.print(line * 2 + 1, 13, ">")
 class PageStoredModules(PageBasepage):  # 4
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
@@ -1020,6 +1067,55 @@ class PageCargo_alt(PageBasepage):          # 1
         self.print(20, 2, "{0} Drohnen".format(self.limpetcount))
         self.print(20, 95, "{0:>3} / {1:>3}".format(self.cargomax - self.cargouse, self.cargomax))
         self.print(20, 35, "{0:^20}".format("{0:,}\u00A2 ".format(self.marge_total)))
+class PageMissions_alt(PageBasepage):       # 3
+    def __init__(self, config, gamedata):
+        super().__init__(config, gamedata)
+        self.loadMissions()
+
+    def loadMissions(self):
+        if exists(self.config["localnames"]["missions"]):
+            with open(self.config["localnames"]["missions"], "r") as file:
+                for line in file.readlines():
+                    mission = json.loads(line)
+                    self.gamedata["missions"].append(mission)
+
+    def update(self):
+        self.screen.clear()
+        if len(self.gamedata["missions"]) > 0:
+            self.update_missions()
+        else:
+            self.update_clear()
+        self.screen.refresh()
+
+    def update_clear(self):
+        self.print(5, 10, "keine Aufträge vorhanden")
+
+    def update_missions(self):
+        line = 0
+        for m in self.gamedata["missions"]:
+            # "Expiry": "2022-10-10T16:33:06Z"
+            expired = "zeitlos"
+            if "Expiry" in m:
+                now = datetime.utcnow()
+                exp = datetime.fromisoformat(m["Expiry"].replace("T", " ").replace("Z", ""))
+                s = (exp - now).seconds
+                hours = s // 3600
+                s = s - (hours * 3600)
+                minutes = s // 60
+                seconds = s - (minutes * 60)
+                expired = "{:02}h{:02}m".format(int(hours), int(minutes))
+                if "DestinationSystem" in m:
+                    if "DestinationStation" in m:
+                        self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", m["DestinationSystem"], m["DestinationStation"]))
+                    else:
+                        self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", m["DestinationSystem"], m["DestinationSettlement"]))
+                    if m["DestinationSystem"] == self.config["user"]["system"]: self.print(line * 2 + 1, 13, ">")
+                else:
+                    self.print(line * 2 + 1, 2, "{0:>10}   Bodenmission".format(" "))
+            else:
+                self.print(line * 2 + 1, 2, "{0:>10}   {1}".format("", m["Faction"]))
+            self.print(line * 2 + 0, 2, "{0:>10}   {1}".format(expired, m["LocalisedName"]))
+            line += 1
 
 
 
