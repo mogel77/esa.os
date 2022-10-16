@@ -21,21 +21,19 @@ class PageBasepage:
         self.screen = curses.newwin(22, 110, 7, 20)
         self.config = config
         self.gamedata = gamedata
-
     def print(self, posy, posx, content):
         try:
             self.screen.addstr(posy, posx, content)
         except curses.error:
             pass # ! douh ! - schlucken ist immer doof
-    
-    # zählt die drohnen im Cargo
     def countDrones(self):
+        # zählt die drohnen im Cargo
         if len(self.gamedata["cargo"]) == 0: return 0
         for fracht in self.gamedata["cargo"]:
             if fracht["Name"] == "drones": return fracht["Count"]
-
+        return 0
     def hasCargo(self):
-        # nix geladen
+        # prüft den Cargo - abzüglich Drohnen
         if len(self.gamedata["cargo"]) == 0: return False
         # wenigsten eine Fracht anders als Drohnen
         if len(self.gamedata["cargo"]) > 1: return True
@@ -43,12 +41,11 @@ class PageBasepage:
         for fracht in self.gamedata["cargo"]:
             if fracht["Name"] == "drones": drones = True
         return not drones
-    
     def getPrice(self, market, commodities):
+        # der Preis am Markt
         for c in market["commodities"]:
             if c["symbol"] == commodities: return int(c["sellPrice"])
         return 0
-
     def getHighestPriceMarket(self, itemname):
         # der Markt mit dem besten Preis
         market = None       # der kaufende Markt
@@ -72,8 +69,8 @@ class PageBasepage:
                         market = station
                         price = neu
         return market
-
     def getCheapestPriceMarket(self, itemname):
+        # Markt mit dem billigsten Preis
         market = None       # der verkaufende Markt
         price = 10000000    # der Preis des Marktes - dürfte aktuelle nie höher sein
         playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
@@ -95,8 +92,8 @@ class PageBasepage:
                         market = station
                         price = neu
         return market
-
     def getNearestPrice(self, itemname):
+        # der am nächsten liegende Markt
         market = None                                           # der verkaufende Markt
         mindistance = float(self.config["distances"]["systems"])   # der Preis des Marktes - dürfte aktuelle nie höher sein
         playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
@@ -118,6 +115,18 @@ class PageBasepage:
                         mindistance = distance
                         self.result_distance = mindistance
         return market
+    def getMission4ID(self, missionid):
+        if len(self.gamedata["missions"]) == 0: return None
+        for m in self.gamedata["missions"]:
+            if m == missionid: return m
+        return None
+    def getMission4Item(self, itemname_localised):
+        if len(self.gamedata["missions"]) == 0: return None
+        for m in self.gamedata["missions"]:
+            if m["Commodity_Localised"].casefold() == itemname_localised.casefold(): return m
+        return None
+
+
 
 class PageLoading(PageBasepage):        # ohne Kennung
     esa = [
@@ -358,11 +367,6 @@ class PageCargo(PageBasepage):          # 1
         with open(self.config["eddir"]["path"] + "/Cargo.json", "r") as f:
             self.gamedata["cargo"] = json.load(f)["Inventory"]
 
-    def getMission(self, id):
-        for m in self.gamedata["missions"]:
-            if m["MissionID"] == id: return m
-        return None
-
     def update(self):
         self.cargouse = 0
         self.marge_total = 0
@@ -395,25 +399,27 @@ class PageCargo(PageBasepage):          # 1
         playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
         itemnumber = 0
         price = 0
+        self.cargouse = self.countDrones()
         for item in cargo:
             cargo_item = item["Name"] # NICHT den Name_Localised
             if cargo_item == "drones": continue # Drohnen werden nicht direkt gezählt
             station = self.getHighestPriceMarket(cargo_item)
             cargo_count = item['Count']
             self.cargouse += cargo_count
+            mission = self.getMission4Item(getDictItem(item, "Name", "Name_Localised"))
+            if mission is None:
+                if "MissionID" in item: mission = self.getMission4ID(item["MissionID"])
             line2 = ""
             if not station is None:
                 price = self.getPrice(station, cargo_item)
                 systempos = [ float(station["coords"][0]), float(station["coords"][1]), float(station["coords"][2]) ]
                 distance = math.dist(playerpos, systempos)
                 cargo_marge = "{:,}".format(price * cargo_count)
-                line1 = "{0:>14}\u00A2   {1:3}  {2:30}".format(cargo_marge, cargo_count, cargo_item)
-                missionitem = False
-                for mission in self.gamedata["missions"]:
-                    if "Commodity_Localised" in mission:
-                        if mission["Commodity_Localised"] == cargo_item: missionitem = True
-                if missionitem:
-                    line2 = "{0:14}    {1:3}  >> mögliche Fracht für eine Liefer-Mission".format(" ", " ") # , maxdistance, cargo_system, cargo_market)
+                line1 = "{0:>14}\u00A2   {1:3}  {2:30}".format(cargo_marge, cargo_count, getDictItem(item, "Name", "Name_Localised"))
+                if not mission is None:
+                    missionname = getDictItem(mission, "Name", "LocalisedName")
+                    missionsystem = mission["DestinationSystem"]
+                    line2 = "{0:14}    {1:3}  >> Fracht für: {2} ({3})".format(" ", " ", missionname, missionsystem) # , maxdistance, cargo_system, cargo_market)
                 else:
                     cargo_system = station["system"]
                     cargo_market = station["name"]
@@ -452,135 +458,7 @@ class PageCargo(PageBasepage):          # 1
         filler = "".join(temp)
         #output = "{0:>3} Drohnen [{1}] {2:>3}/{3:>3}".format(self.limpetcount, filler, self.cargouse, self.cargomax)
         self.print(21, 2, "[{0}]".format(filler))
-        self.print(20, 2, "{0} Drohnen".format(self.limpetcount))
-        self.print(20, 95, "{0:>3} / {1:>3}".format(self.cargomax - self.cargouse, self.cargomax))
-        self.print(20, 35, "{0:^20}".format("{0:,}\u00A2 ".format(self.marge_total)))
-
-class PageCargo_alt(PageBasepage):          # 1
-    def __init__(self, config, gamedata):
-        super().__init__(config, gamedata)
-        self.loadCargo()
-
-    def loadCargo(self):
-        if not exists(self.config["eddir"]["path"] + "/Cargo.json"): return
-        with open(self.config["eddir"]["path"] + "/Cargo.json", "r") as f:
-            self.gamedata["cargo"] = json.load(f)["Inventory"]
-
-    def getMission(self, id):
-        for m in self.gamedata["missions"]:
-            if m["MissionID"] == id: return m
-        return None
-
-    def update(self):
-        self.cargouse = 0
-        self.marge_total = 0
-        if len(self.gamedata["stored"]["outfit"]) > 0:
-            self.cargomax = self.gamedata["stored"]["outfit"]["CargoCapacity"]
-        else:
-            self.cargomax = 999 # maximaler Speicherraum - da das Outfit noch nicht geladen wurde
-        self.limpetcount = 0
-        self.screen.clear()
-        if self.hasCargo(): # mehr als genug Fracht
-            self.update_cargo()
-        else:
-            # entweder 1x Fracht oder nur Drohnen
-            self.limpetcount = self.countDrones()
-            if self.limpetcount == 0:
-                # es ist Fracht
-                self.update_cargo()
-            else: # es sind nur Drohnen
-                self.cargouse = self.limpetcount
-        self.showCapacity()
-        self.screen.refresh()
-    def update_clear(self):
-        self.print(5, 10, "der Frachtraum ist zur Zeit leer")
-    def update_cargo(self):
-        cargo = self.gamedata["cargo"]
-        self.print(10, 20, "... berechne Daten für aktuellen Cargo ...")
-        self.screen.refresh()
-        self.screen.clear()
-        playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
-        stations = self.gamedata["stations"]
-        itemnumber = 0
-        for item in cargo:
-            maxmarket = None
-            maxdistance = 0.0
-            price = 0
-            if not "MissionID" in item:
-                for station in stations:
-                    systempos = [ float(station["coords"][0]), float(station["coords"][1]), float(station["coords"][2]) ]
-                    distance = math.dist(playerpos, systempos)
-                    if distance > float(self.config["distances"]["systems"]): continue
-                    if station["ls"] > float(self.config["distances"]["stations"]): continue
-                    for commodities in station["commodities"]:
-                        if commodities["demand"] <= 0: continue;
-                        if commodities["symbol"] != item["Name"]: continue
-                        if commodities["sellPrice"] < 1.0: continue
-                        if maxmarket is None:
-                            maxmarket = station
-                        else:
-                            neu = self.getPrice(station, item["Name"])
-                            if neu > price:
-                                maxdistance = distance
-                                maxmarket = station
-                                price = neu
-            # maxmarket hat jetzt den besten Preis für das Item
-            cargo_item = item["Name"]
-            if "Name_Localised" in item: cargo_item = item["Name_Localised"]
-            cargo_count = item['Count']
-            self.cargouse += cargo_count
-            cargo_price = "{:,}".format(price)
-            fullmarge = price * cargo_count
-            cargo_marge = "{:,}".format(price * cargo_count)
-            line1 = "{0:>14}\u00A2   {1:3}  {2:30}".format(cargo_marge, cargo_count, cargo_item)
-            line2 = ""
-            if not maxmarket is None:
-                missionitem = False
-                for mission in self.gamedata["missions"]:
-                    if "Commodity_Localised" in mission:
-                        if mission["Commodity_Localised"] == cargo_item: missionitem = True
-                if missionitem:
-                    line2 = "{0:14}    {1:3}  >> mögliche Fracht für eine Liefer-Mission".format(" ", " ") # , maxdistance, cargo_system, cargo_market)
-                else:
-                    cargo_system = maxmarket["system"]
-                    cargo_distance = "{:6.1f}".format(maxdistance) + "ly"
-                    cargo_market = maxmarket["name"]
-                    line2 = "{0:14}    {1:3}  {2:4.1f}ly {3} ({4})".format(" ", " ", maxdistance, cargo_system, cargo_market)
-                self.marge_total += fullmarge
-            else:
-                if not "MissionID" in item:
-                    missionitem = False
-                    for mission in self.gamedata["missions"]:
-                        if "Commodity_Localised" in mission:
-                            if mission["Commodity_Localised"].lower() == cargo_item.lower(): missionitem = True
-                    if missionitem:
-                        line2 = "{0:14}    {1:3}  >> mögliche Fracht für eine Liefer-Mission".format(" ", " ") # , maxdistance, cargo_system, cargo_market)
-                    else:
-                        line2 = "{0:14}    {1:3}  innerhalb von {2:4.1f}ly nicht verkaufbar".format(" ", " ", float(self.config["distances"]["systems"]))
-                    self.marge_total += fullmarge
-                else:
-                    mission = self.getMission(item["MissionID"])
-                    if mission is None:
-                        line2 = "{0:14}    {1:3}  >> Fracht für eine unbekannte Mission".format(" ", " ")
-                    else:
-                        line2 = "{0:14}    {1:3}  >> {2}".format(" ", " ", mission["LocalisedName"])
-            if item["Name"] == "drones":
-                self.limpetcount = cargo_count
-                continue # Drohnen müssen ausgeblendet werden
-            self.print(itemnumber * 2 + 0, 5, line1)
-            self.print(itemnumber * 2 + 1, 5, line2)
-            itemnumber += 1
-            self.screen.refresh()
-    def showCapacity(self):
-        percent = (self.cargouse / self.cargomax) * 100.0
-        filler = ""
-        for i in range(0, 100): filler += " "     # vorfüllen
-        temp = list(filler)
-        for i in range(0, int(percent)): temp[i] = "="     # auffüllen
-        filler = "".join(temp)
-        #output = "{0:>3} Drohnen [{1}] {2:>3}/{3:>3}".format(self.limpetcount, filler, self.cargouse, self.cargomax)
-        self.print(21, 2, "[{0}]".format(filler))
-        self.print(20, 2, "{0} Drohnen".format(self.limpetcount))
+        self.print(20, 2, "{0} Drohnen".format(self.countDrones()))
         self.print(20, 95, "{0:>3} / {1:>3}".format(self.cargomax - self.cargouse, self.cargomax))
         self.print(20, 35, "{0:^20}".format("{0:,}\u00A2 ".format(self.marge_total)))
 class PageRoute(PageBasepage):          # 2
@@ -1015,6 +893,133 @@ class PageAsteroid(PageBasepage):       # 8
 
 
 
+class PageCargo_alt(PageBasepage):          # 1
+    def __init__(self, config, gamedata):
+        super().__init__(config, gamedata)
+        self.loadCargo()
+
+    def loadCargo(self):
+        if not exists(self.config["eddir"]["path"] + "/Cargo.json"): return
+        with open(self.config["eddir"]["path"] + "/Cargo.json", "r") as f:
+            self.gamedata["cargo"] = json.load(f)["Inventory"]
+
+    def getMission(self, id):
+        for m in self.gamedata["missions"]:
+            if m["MissionID"] == id: return m
+        return None
+
+    def update(self):
+        self.cargouse = 0
+        self.marge_total = 0
+        if len(self.gamedata["stored"]["outfit"]) > 0:
+            self.cargomax = self.gamedata["stored"]["outfit"]["CargoCapacity"]
+        else:
+            self.cargomax = 999 # maximaler Speicherraum - da das Outfit noch nicht geladen wurde
+        self.limpetcount = 0
+        self.screen.clear()
+        if self.hasCargo(): # mehr als genug Fracht
+            self.update_cargo()
+        else:
+            # entweder 1x Fracht oder nur Drohnen
+            self.limpetcount = self.countDrones()
+            if self.limpetcount == 0:
+                # es ist Fracht
+                self.update_cargo()
+            else: # es sind nur Drohnen
+                self.cargouse = self.limpetcount
+        self.showCapacity()
+        self.screen.refresh()
+    def update_clear(self):
+        self.print(5, 10, "der Frachtraum ist zur Zeit leer")
+    def update_cargo(self):
+        cargo = self.gamedata["cargo"]
+        self.print(10, 20, "... berechne Daten für aktuellen Cargo ...")
+        self.screen.refresh()
+        self.screen.clear()
+        playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
+        stations = self.gamedata["stations"]
+        itemnumber = 0
+        for item in cargo:
+            maxmarket = None
+            maxdistance = 0.0
+            price = 0
+            if not "MissionID" in item:
+                for station in stations:
+                    systempos = [ float(station["coords"][0]), float(station["coords"][1]), float(station["coords"][2]) ]
+                    distance = math.dist(playerpos, systempos)
+                    if distance > float(self.config["distances"]["systems"]): continue
+                    if station["ls"] > float(self.config["distances"]["stations"]): continue
+                    for commodities in station["commodities"]:
+                        if commodities["demand"] <= 0: continue;
+                        if commodities["symbol"] != item["Name"]: continue
+                        if commodities["sellPrice"] < 1.0: continue
+                        if maxmarket is None:
+                            maxmarket = station
+                        else:
+                            neu = self.getPrice(station, item["Name"])
+                            if neu > price:
+                                maxdistance = distance
+                                maxmarket = station
+                                price = neu
+            # maxmarket hat jetzt den besten Preis für das Item
+            cargo_item = item["Name"]
+            if "Name_Localised" in item: cargo_item = item["Name_Localised"]
+            cargo_count = item['Count']
+            self.cargouse += cargo_count
+            cargo_price = "{:,}".format(price)
+            fullmarge = price * cargo_count
+            cargo_marge = "{:,}".format(price * cargo_count)
+            line1 = "{0:>14}\u00A2   {1:3}  {2:30}".format(cargo_marge, cargo_count, cargo_item)
+            line2 = ""
+            if not maxmarket is None:
+                missionitem = False
+                for mission in self.gamedata["missions"]:
+                    if "Commodity_Localised" in mission:
+                        if mission["Commodity_Localised"] == cargo_item: missionitem = True
+                if missionitem:
+                    line2 = "{0:14}    {1:3}  >> mögliche Fracht für eine Liefer-Mission".format(" ", " ") # , maxdistance, cargo_system, cargo_market)
+                else:
+                    cargo_system = maxmarket["system"]
+                    cargo_distance = "{:6.1f}".format(maxdistance) + "ly"
+                    cargo_market = maxmarket["name"]
+                    line2 = "{0:14}    {1:3}  {2:4.1f}ly {3} ({4})".format(" ", " ", maxdistance, cargo_system, cargo_market)
+                self.marge_total += fullmarge
+            else:
+                if not "MissionID" in item:
+                    missionitem = False
+                    for mission in self.gamedata["missions"]:
+                        if "Commodity_Localised" in mission:
+                            if mission["Commodity_Localised"].lower() == cargo_item.lower(): missionitem = True
+                    if missionitem:
+                        line2 = "{0:14}    {1:3}  >> mögliche Fracht für eine Liefer-Mission".format(" ", " ") # , maxdistance, cargo_system, cargo_market)
+                    else:
+                        line2 = "{0:14}    {1:3}  innerhalb von {2:4.1f}ly nicht verkaufbar".format(" ", " ", float(self.config["distances"]["systems"]))
+                    self.marge_total += fullmarge
+                else:
+                    mission = self.getMission(item["MissionID"])
+                    if mission is None:
+                        line2 = "{0:14}    {1:3}  >> Fracht für eine unbekannte Mission".format(" ", " ")
+                    else:
+                        line2 = "{0:14}    {1:3}  >> {2}".format(" ", " ", mission["LocalisedName"])
+            if item["Name"] == "drones":
+                self.limpetcount = cargo_count
+                continue # Drohnen müssen ausgeblendet werden
+            self.print(itemnumber * 2 + 0, 5, line1)
+            self.print(itemnumber * 2 + 1, 5, line2)
+            itemnumber += 1
+            self.screen.refresh()
+    def showCapacity(self):
+        percent = (self.cargouse / self.cargomax) * 100.0
+        filler = ""
+        for i in range(0, 100): filler += " "     # vorfüllen
+        temp = list(filler)
+        for i in range(0, int(percent)): temp[i] = "="     # auffüllen
+        filler = "".join(temp)
+        #output = "{0:>3} Drohnen [{1}] {2:>3}/{3:>3}".format(self.limpetcount, filler, self.cargouse, self.cargomax)
+        self.print(21, 2, "[{0}]".format(filler))
+        self.print(20, 2, "{0} Drohnen".format(self.limpetcount))
+        self.print(20, 95, "{0:>3} / {1:>3}".format(self.cargomax - self.cargouse, self.cargomax))
+        self.print(20, 35, "{0:^20}".format("{0:,}\u00A2 ".format(self.marge_total)))
 
 
 
