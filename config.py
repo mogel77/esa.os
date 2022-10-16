@@ -30,6 +30,7 @@ def updateConfig():
     # Konfiguration erstellen
     checkEntry('eddir', 'path', 'unset')
     checkEntry('eddir', 'lastlog', 'unsed')
+    checkEntry('eddir', 'edmc', '../EDMarketConnector')
 
     # Download URLS
     # checkEntry('urls', 'commodities', 'https://edgalaxydata.space/EDDB/dumps/commodities.json')
@@ -86,10 +87,11 @@ def updateConfig():
     checkEntry('user', 'channel', 'auto')
 
     # Seitenmanagement
-    checkEntry('pages', 'activepage','1')             # aktive Seite
+    checkEntry('pages', 'activepage','1')           # aktive Seite
     checkEntry('pages', 'priopage', 'mining')       # Seite nach einem NavRouteClear (Mining oder Cargo)
-    checkEntry('pages', 'autopage','yes')             # later - automatisches Wechseln der Seiten bei passendem Event
-    checkEntry('pages', 'events', 'no')              # debug-Ausgabe - oder auch knallen der Exception (also nicht verstecken)
+    checkEntry('pages', 'autopage','yes')           # later - automatisches Wechseln der Seiten bei passendem Event
+    checkEntry('pages', 'events', 'no')             # debug-Ausgabe - oder auch knallen der Exception (also nicht verstecken)
+    checkEntry('pages', 'edmc', 'no')          # Autostart von EDMC
 
     # und dann schreiben
     with open(r"config.ini", 'w') as configfile:

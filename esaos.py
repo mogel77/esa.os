@@ -1,14 +1,17 @@
 import configparser
 import curses
 import os
+import subprocess
 import json
 import sys
 import logging
 import time
+import multiprocessing
 from curses import wrapper
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from os.path import exists
+from threading import Thread
 
 import tools
 import pages
@@ -100,7 +103,8 @@ class MyFileHandler(FileSystemEventHandler):
             gamedata["event"] = None
             self.secureDispatch(event)
         except Exception as ex:
-            gamedata["logger"].error("{0}".format(ex), exc_info=True)
+            #gamedata["logger"].error("{0}".format(ex), exc_info=True)
+            gamedata["logger"].exception(ex)
             if not gamedata["event"] is None: gamedata["logger"].error(">>> {0}".format(json.dumps(gamedata["event"])))
     def secureDispatch(self, event):
         while self.has_another_line(self.logfile):
@@ -656,8 +660,8 @@ def pageManager_catch():
     try:
         pageManager_raw()
     except Exception as ex:
-
-        gamedata["logger"].error("{0}".format(ex))
+        # gamedata["logger"].error("{0}".format(ex))
+        gamedata["logger"].exception(ex)
         if "event" in gamedata: gamedata["logger"].error("!!! " + json.dumps(gamedata["event"])) # das wurde "gesendet"
 
 def pageManager_raw():
@@ -693,6 +697,17 @@ def inputManager(key):
 
 
 
+def startEDMC():
+    if config["pages"]["edmc"] == "yes":
+        gamedata["logger"].info("Autostart für EDMC aktiviert")
+        if exists(config["eddir"]["edmc"] + "/EDMarketConnector.py"):
+            result = subprocess.run([sys.executable, config["eddir"]["edmc"] + "/EDMarketConnector.py"])
+            gamedata["logger"].info("EDMC-Start: " + str(result))
+            gamedata["logger"].info("EDMC wurde wieder beendet")
+        else:
+            gamedata["logger"].info("EDMC nicht gefunden bzw. Pfad falsch gesetzt")
+    else:
+        gamedata["logger"].info("kein Autostart für EDMC")
 
 def main(stdsrc):
     global winheader, winmenu, winevents, winstatus
@@ -769,9 +784,14 @@ def main(stdsrc):
     if not observer is None: observer.join()
 
 
+# edmc = Thread(target=startEDMC)
+edmc = multiprocessing.Process(target=startEDMC)
+edmc.start()
+time.sleep(1)
+
 wrapper(main)
-# nur noch Konfig sichern
-#with open(r"config.ini", 'w') as configfile: config.write(configfile)
+edmc.kill()
+# Config sichern, nach dem beenden
+print("speichere Konfiguration")
 tools.saveConfig(config, gamedata)
-
-
+print("bye, bye")
