@@ -449,9 +449,9 @@ def Event_MissionCompleted(event):
             gamedata["missions"].remove(m)
             with open(config["localnames"]["missions"], "w") as out:
                 for m in gamedata["missions"]: out.write(json.dumps(m) + '\n')
-            break
-    handleCreditsAdd("Reward", event)
-    pageManager()
+            handleCreditsAdd("Reward", event)
+            pageManager()
+            return
 
 def Event_LeaveBody(entry):
     gamedata["status"][0] = ""
