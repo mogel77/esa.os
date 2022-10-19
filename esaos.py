@@ -6,6 +6,7 @@ import sys
 import logging
 import time
 import multiprocessing
+import platform
 import subprocess
 from curses import wrapper
 from watchdog.observers import Observer
@@ -199,27 +200,6 @@ def Event_NavRouteClear(entry):
     # { "timestamp":"2022-10-08T12:59:46Z", "event":"NavRoute" }
     gamedata["route"] = [] # löschen -damit FSDJump nicht wieder die leere Route aufruft
     autoPage(getPrioPage())
-    def veraltet():
-        if len(gamedata["cargo"]) > 0:
-            only = False
-            for fracht in gamedata["cargo"]:
-                if fracht["Name"].casefold() == "drones": only = True
-            if len(gamedata["cargo"]) > 1: only = False # noch was anderes als Drohnen
-            if only == True:
-                # nur dronen im Frachtraum
-                if len(gamedata["missions"]) > 0:
-                    # bei keinen Missionen, dann doch das Cargo
-                    autoPage(3)
-                else:
-                    autoPage(1)
-            else:
-                autoPage(1) # mehr als nur dronen
-        else:
-            if len(gamedata["missions"]) == 0:
-                # bei keinen Missionen, dann doch das Cargo
-                autoPage(1)
-            else:
-                autoPage(3)
 def Event_FSDTarget(entry): # das ist das nächste Ziel zum Sprung
     # { "timestamp":"2022-10-08T12:59:46Z", "event":"FSDTarget", "Name":"Sharru Sector YO-A b0", "SystemAddress":671760000393, "StarClass":"M", "RemainingJumpsInRoute":8 }
     pass
@@ -451,7 +431,8 @@ def Event_MissionCompleted(event):
                 for m in gamedata["missions"]: out.write(json.dumps(m) + '\n')
             handleCreditsAdd("Reward", event)
             pageManager()
-            return
+            break
+    autoPage(getPrioPage())
 
 def Event_LeaveBody(entry):
     gamedata["status"][0] = ""
@@ -582,7 +563,9 @@ def Event_PowerplayFastTrack(entry):
     handleCreditsSub("Cost", entry)
 
 
-# { "timestamp":"2022-10-15T13:18:04Z", "event":"MissionRedirected", "MissionID":894845762, "Name":"Mission_Salvage", "NewDestinationStation":"Li Qing Jao", "NewDestinationSystem":"Sol", "OldDestinationStation":"", "OldDestinationSystem":"Avik" }
+
+# { "timestamp":"2022-10-16T19:06:26Z", "event":"MissionAbandoned", "Name":"Mission_Collect_name", "MissionID":895117670 }
+
 
 
 def addMessage(channel, message):
@@ -699,15 +682,22 @@ def inputManager(key):
 
 def startEDMC():
     if config["pages"]["edmc"] == "yes":
-        gamedata["logger"].info("Autostart für EDMC aktiviert")
+        gamedata["logger"].info("Autostart für EDMC aktiviert -> " + platform.system())
         if exists(config["eddir"]["edmc"] + "/EDMarketConnector.py"):
-            result = subprocess.run([sys.executable, config["eddir"]["edmc"] + "/EDMarketConnector.py"])
-            gamedata["logger"].info("EDMC-Start: " + str(result))
+            parameter = [   
+                            sys.executable, 
+                            config["eddir"]["edmc"] + "/EDMarketConnector.py"
+                        ]
+            proc = subprocess.Popen(parameter, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out = proc.communicate()[0]
+            err = proc.communicate()[1]
             gamedata["logger"].info("EDMC wurde wieder beendet")
         else:
             gamedata["logger"].info("EDMC nicht gefunden bzw. Pfad falsch gesetzt")
     else:
         gamedata["logger"].info("kein Autostart für EDMC")
+
+
 
 def main(stdsrc):
     global winheader, winmenu, winevents, winstatus
@@ -784,13 +774,13 @@ def main(stdsrc):
     if not observer is None: observer.join()
 
 
-# edmc = Thread(target=startEDMC)
-#edmc = multiprocessing.Process(target=startEDMC)
-#edmc.start()
+edmc = Thread(target=startEDMC)
+edmc = multiprocessing.Process(target=startEDMC)
+edmc.start()
 time.sleep(1)
 
 wrapper(main)
-#edmc.kill()
+edmc.kill()
 # Config sichern, nach dem beenden
 print("speichere Konfiguration")
 tools.saveConfig(config, gamedata)

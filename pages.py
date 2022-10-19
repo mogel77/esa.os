@@ -96,7 +96,7 @@ class PageBasepage:
                         market = station
                         price = neu
         return market
-    def getNearestPrice(self, itemname):
+    def getNearestPrice(self, itemname, supply=0):
         # der am nächsten liegende Markt
         # self.gamedata["logger"].info("suche Item: " + itemname)
         market = None                                           # der verkaufende Markt
@@ -108,7 +108,7 @@ class PageBasepage:
             if distance > float(self.config["distances"]["systems"]): continue
             if station["ls"] > float(self.config["distances"]["stations"]): continue
             for commodities in station["commodities"]:
-                if commodities["supply"] <= 0: continue;
+                if commodities["supply"] <= supply: continue;
                 if commodities["symbol"] != itemname: continue
                 if commodities["buyPrice"] < 1.0: continue
                 if market is None:
@@ -326,7 +326,7 @@ class PageSettings(PageBasepage):       # 0
         self.print(6, 5, self.formatSetting("L", self.config["distances"]["stations"], "max. Entfernung der Stationen für Verkauf (Ls)"))
         self.print(7, 5, self.formatSetting("A", self.config["pages"]["autopage"], "automatisch die Seiten umschalten"))
         self.print(8, 5, self.formatSetting("P", self.config["pages"]["priopage"], "Seite nach dem Ende der Route"))
-        #self.print(14, 5, self.formatSetting("M", self.config["pages"]["edmc"], "Autostart von EDMarketConnector"))
+        self.print(14, 5, self.formatSetting("M", self.config["pages"]["edmc"], "Autostart von EDMarketConnector (experimentell)"))
         self.print(15, 5, self.formatSetting("F", self.config["filter"]["distance"], "Systeme weiter vom Heimatsystem, werden gelöscht/ignoriert (Ly)"))
         self.print(16, 5, self.formatSetting("E", self.config["pages"]["events"], "Events anzeigen (Debug-Funktion)"))
         self.screen.refresh()
@@ -616,7 +616,7 @@ class PageMissions(PageBasepage):       # 3
         incargo = self.getItemFromCargo(mission_item)
         if incargo is None:
             # market = self.getNearestPrice(mission_item)
-            market = self.getNearestPrice((mission["Commodity"][1:]).replace("_Name;", "").casefold())
+            market = self.getNearestPrice((mission["Commodity"][1:]).replace("_Name;", "").casefold(), mission["Count"] * 2) # mind. doppelte benötigt
             if not market is None:
                 self.print(line * 2 + 1, 2, "{0:>10}   >> kaufbar bei {1} ({2})".format(" ", market["system"], market["name"]))
             else:
