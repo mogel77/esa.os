@@ -173,6 +173,7 @@ class MyFileHandler(FileSystemEventHandler):
             if entry["event"] == "RepairAll": Event_RepairAll(entry)
             if entry["event"] == "RestockVehicle": Event_RestockVehicle(entry)
             if entry["event"] == "PowerplayFastTrack": Event_PowerplayFastTrack(entry)
+            if entry["event"] == "NpcCrewPaidWage": Event_NpcCrewPaidWage(entry)
             winmenu.update()
 
 
@@ -561,7 +562,8 @@ def Event_RestockVehicle(entry):
     handleCreditsSub("Cost", entry)
 def Event_PowerplayFastTrack(entry):
     handleCreditsSub("Cost", entry)
-
+def Event_NpcCrewPaidWage(entry):
+    handleCreditsSub("Amount", entry)
 
 
 # { "timestamp":"2022-10-16T19:06:26Z", "event":"MissionAbandoned", "Name":"Mission_Collect_name", "MissionID":895117670 }
