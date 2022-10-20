@@ -576,6 +576,7 @@ class PageMissions(PageBasepage):       # 3
     def update_missions(self):
         line = 0
         for mission in self.gamedata["missions"]:
+            self.isCorrectSystem = False
             mission_type = mission["Name"].casefold()
             expired = self.getExpiry(mission)
             self.gamedata["logger"].info(mission_type + ": " + mission["LocalisedName"]);
@@ -584,19 +585,30 @@ class PageMissions(PageBasepage):       # 3
             if mission_type == "mission_mining": self.showMining(mission, line)
             if mission_type == "mission_delivery_cooperative": self.showDeliveryCoop(mission, line)
             if mission_type == "mission_onfoot_collect": self.showFootCollect(mission, line)
-            if mission_type == "mission_salvage": self.showSalvage(mission, line)
-            if mission_type == "mission_courier_service": self.showSalvage(mission, line)
-            if mission_type == "mission_delivery_democracy": self.showSalvage(mission, line)
+            if mission_type == "mission_salvage": self.showMissionDefault(mission, line)
+            if mission_type == "mission_courier_service": self.showMissionDefault(mission, line)
+            if mission_type == "mission_delivery_democracy": self.showMissionDefault(mission, line)
+            if mission_type == "mission_courier_engineer": self.showMissionDefault(mission, line)
+            if mission_type == "mission_onfoot_assassination_003": self.showMissionAssasinate(mission, line)
             if mission["DestinationSystem"] == self.config["user"]["system"]: self.print(line * 2 + 1, 13, ">")
-            line += 1
+            if self.isCorrectSystem: self.print(line * 2 + 1, 13, ">")
             self.screen.refresh()
-    def showSalvage(self, mission, line):
+            line += 1
+    def showMissionDefault(self, mission, line):
         self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationStation"]))
+        if mission["DestinationSystem"] == self.config["user"]["system"]: self.isCorrectSystem = True
+    def showMissionAssasinate(self, mission, line):
+        if "DestinationStation" in mission:
+            self.print(line * 2 + 1, 2, "{0:>10}   zurück nach {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationStation"], mission["Target"]))
+        else:
+            self.print(line * 2 + 1, 2, "{0:>10}   töte {3} in {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationSettlement"], mission["Target"]))
+        if mission["DestinationSystem"] == self.config["user"]["system"]: self.isCorrectSystem = True
     def showFootCollect(self, mission, line):
         if "DestinationSystem" in mission:
             self.showMining(mission, line)
         else:
             self.print(line * 2 + 1, 2, "{0:>10}   Bodenmission".format(" "))
+        if mission["DestinationSystem"] == self.config["user"]["system"]: self.isCorrectSystem = True        
     def showDeliveryCoop(self, mission, line):
         mission_item = getDictItem(mission, "Commodity", "Commodity_Localised")
         # self.gamedata["logger"].info("MissionItem: " + mission_item)
@@ -605,11 +617,10 @@ class PageMissions(PageBasepage):       # 3
 #            self.print(line * 2 + 1, 2, "{0:>10}   >> abholen {1} ({2})".format(" ", market["system"], market["name"]))
 #        else:
         if "DestinationStation" in mission:
-            self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationStation"]))
+            self.print(line * 2 + 1, 2, "{0:>10}   zurück nach {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationStation"]))
         else:
             self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationSettlement"]))
-    def showCollect(self, mission, line):
-        self.showMining(mission, line) # erstmal
+        if mission["DestinationSystem"] == self.config["user"]["system"]: self.isCorrectSystem = True        
     def showMining(self, mission, line):
         mission_item = getDictItem(mission, "Commodity", "Commodity_Localised")
         # self.gamedata["logger"].info("MissionItem: " + mission_item)
@@ -618,15 +629,15 @@ class PageMissions(PageBasepage):       # 3
             # market = self.getNearestPrice(mission_item)
             market = self.getNearestPrice((mission["Commodity"][1:]).replace("_Name;", "").casefold(), mission["Count"] * 2) # mind. doppelte benötigt
             if not market is None:
-                self.print(line * 2 + 1, 2, "{0:>10}   >> kaufbar bei {1} ({2})".format(" ", market["system"], market["name"]))
+                self.print(line * 2 + 1, 2, "{0:>10}   kaufbar bei {1} ({2})".format(" ", market["system"], market["name"]))
             else:
                 self.print(line * 2 + 1, 2, "{0:>10}   kein passenden Markt gefunden".format(" "))
         else:
             if "DestinationStation" in mission:
-                self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationStation"]))
+                self.print(line * 2 + 1, 2, "{0:>10}   abliefern bei {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationStation"]))
             else:
-                self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationSettlement"]))
-        if mission["DestinationSystem"] == self.config["user"]["system"]: self.print(line * 2 + 1, 13, ">")
+                self.print(line * 2 + 1, 2, "{0:>10}   abliefern bei {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationSettlement"]))
+        if mission["DestinationSystem"] == self.config["user"]["system"]: self.isCorrectSystem = True
 class PageStoredModules(PageBasepage):  # 4
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
