@@ -538,7 +538,7 @@ class PageRoute(PageBasepage):          # 2
         filler = ""
         for i in range(0, 100): filler += "-"     # vorfüllen
         temp = list(filler)
-        temp[int(percent)] = "|"     # auffüllen
+        if percent < 100: temp[int(percent)] = "|"     # auffüllen
         filler = "".join(temp)
         self.print(21, 2, "[{0}]".format(filler))
         self.print(20, 2, "{0}".format(self.gamedata["route"][0]["StarSystem"]))
@@ -581,21 +581,29 @@ class PageMissions(PageBasepage):       # 3
             expired = self.getExpiry(mission)
             self.gamedata["logger"].info(mission_type + ": " + mission["LocalisedName"]);
             self.print(line * 2 + 0, 2, "{0:>10}   {1}".format(expired, mission["LocalisedName"]))
-            if mission_type == "mission_collect": self.showCollect(mission, line)
-            if mission_type == "mission_mining": self.showMining(mission, line)
-            if mission_type == "mission_delivery_cooperative": self.showDeliveryCoop(mission, line)
-            if mission_type == "mission_onfoot_collect": self.showFootCollect(mission, line)
-            if mission_type == "mission_salvage": self.showMissionDefault(mission, line)
-            if mission_type == "mission_courier_service": self.showMissionDefault(mission, line)
-            if mission_type == "mission_delivery_democracy": self.showMissionDefault(mission, line)
-            if mission_type == "mission_courier_engineer": self.showMissionDefault(mission, line)
-            if mission_type == "mission_onfoot_assassination_003": self.showMissionAssasinate(mission, line)
-            if mission["DestinationSystem"] == self.config["user"]["system"]: self.print(line * 2 + 1, 13, ">")
+            if "mission_collect" in mission_type: self.showMissionDefault(mission, line)
+            if "mission_mining" in mission_type: self.showMining(mission, line)
+            if "mission_delivery_cooperative" in mission_type: self.showDeliveryCoop(mission, line)
+            if "mission_onfoot_collect" in mission_type: self.showFootCollect(mission, line)
+            if "mission_salvage" in mission_type: self.showMissionDefault(mission, line)
+            if "mission_courier_service" in mission_type: self.showMissionDefault(mission, line)
+            if "mission_delivery_democracy" in mission_type: self.showMissionDefault(mission, line)
+            if "mission_courier_engineer" in mission_type: self.showMissionDefault(mission, line)
+            if "mission_onfoot_salvage" in mission_type: self.showFootCollect(mission, line)
+            if "mission_onfoot_assassination" in mission_type: self.showMissionAssasinate(mission, line)
+            if "mission_onfoot_onslaught" in mission_type: 
+                if not "illegal" in mission_type:
+                    self.showMissionOnslaughtLegal(mission, line)
+                else:
+                    self.showMissionOnslaughtIllegal(mission, line)
             if self.isCorrectSystem: self.print(line * 2 + 1, 13, ">")
             self.screen.refresh()
             line += 1
     def showMissionDefault(self, mission, line):
-        self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationStation"]))
+        if "DestinationStation" in mission:
+            self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationStation"]))
+        else:
+            self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationSettlement"]))
         if mission["DestinationSystem"] == self.config["user"]["system"]: self.isCorrectSystem = True
     def showMissionAssasinate(self, mission, line):
         if "DestinationStation" in mission:
@@ -605,10 +613,10 @@ class PageMissions(PageBasepage):       # 3
         if mission["DestinationSystem"] == self.config["user"]["system"]: self.isCorrectSystem = True
     def showFootCollect(self, mission, line):
         if "DestinationSystem" in mission:
-            self.showMining(mission, line)
+            self.showMissionDefault(mission, line)
         else:
             self.print(line * 2 + 1, 2, "{0:>10}   Bodenmission".format(" "))
-        if mission["DestinationSystem"] == self.config["user"]["system"]: self.isCorrectSystem = True        
+        # -- keine Prüfung möglich - fehlt ja DestinationSystem (oder ein anderes) -- if mission["DestinationSystem"] == self.config["user"]["system"]: self.isCorrectSystem = True        
     def showDeliveryCoop(self, mission, line):
         mission_item = getDictItem(mission, "Commodity", "Commodity_Localised")
         # self.gamedata["logger"].info("MissionItem: " + mission_item)
@@ -637,6 +645,18 @@ class PageMissions(PageBasepage):       # 3
                 self.print(line * 2 + 1, 2, "{0:>10}   abliefern bei {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationStation"]))
             else:
                 self.print(line * 2 + 1, 2, "{0:>10}   abliefern bei {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationSettlement"]))
+        if mission["DestinationSystem"] == self.config["user"]["system"]: self.isCorrectSystem = True
+    def showMissionOnslaughtLegal(self, mission, line):
+        if "DestinationStation" in mission:
+            self.print(line * 2 + 1, 2, "{0:>10}   beichten in {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationStation"]))
+        else:
+            self.print(line * 2 + 1, 2, "{0:>10}   lizensierter Amoklauf in {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationSettlement"]))
+        if mission["DestinationSystem"] == self.config["user"]["system"]: self.isCorrectSystem = True
+    def showMissionOnslaughtIllegal(self, mission, line):
+        if "DestinationStation" in mission:
+            self.print(line * 2 + 1, 2, "{0:>10}   zurück nach {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationStation"]))
+        else:
+            self.print(line * 2 + 1, 2, "{0:>10}   Illegale Aktion in {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationSettlement"]))
         if mission["DestinationSystem"] == self.config["user"]["system"]: self.isCorrectSystem = True
 class PageStoredModules(PageBasepage):  # 4
     def __init__(self, config, gamedata):
