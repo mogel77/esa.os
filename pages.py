@@ -241,59 +241,65 @@ class PageDownloads(PageBasepage):      # U
         with gzip.open(self.config["localnames"]["galaxy_gz"], 'rb') as f_in:
             with open(self.config["localnames"]["galaxy_json"], 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
-        self.printline(15, 5, "> convert galaxy.json")
+
+        self.printline(15, 5, "> get stations from galaxy.json -max {0}ly".format(self.config["filter"]["distance"]))
+        j_stations = []     # Array
+        j_bodies = []
         with open(self.config["localnames"]["galaxy_json"], "r") as f:
             galaxy = json.load(f)
-            with open(self.config["localnames"]["galaxy_jsonl"], "w") as out:
-                hx = float(self.config["user"]["homex"])
-                hy = float(self.config["user"]["homey"])
-                hz = float(self.config["user"]["homez"])
-                userhome = [ hx, hy, hz ]
-                for l in galaxy:
-                    dist = math.dist([ l["coords"]["x"], l["coords"]["y"], l["coords"]["z"] ], userhome)
-                    if dist < float(self.config["filter"]["distance"]):
-                        dump = json.dumps(l);
-                        out.write(dump + '\n')
-        self.printline(16, 5, "> get stations from galaxy.json -max {0}ly".format(self.config["filter"]["distance"]))
-        file = open(self.config["localnames"]["galaxy_jsonl"], "r")
-        j_stations = []     # Array
-        while True:
-            line = file.readline()
-            if not line: break
-            system = json.loads(line)
-            # keine Stationen, dann ist das System völlig unwichtig
-            if len(system["stations"]) == 0: continue
-            for station in system["stations"]:
-                if "Carrier" in station["type"]: continue   # erstmal keine Carrier
-                j_market = {}
-                if not "market" in station: continue
-                # -- for key, value in station.items(): print(key)
-                # System: name - coords
-                j_market["system"] = system["name"]
-                j_market["coords"] = [ system["coords"]["x"], system["coords"]["y"], system["coords"]["z"] ]
-                # Market: name - id
-                j_market["id"] = station["id"]
-                j_market["name"] = station["name"]
-                j_market["ls"] = station["distanceToArrival"]
-                # Prices
-                j_market["commodities"] = []
-                # -- for key, value in market.items(): print(key)
-                commodities = station["market"]["commodities"]
-                for c in commodities:
-                    c["symbol"] = c["symbol"].lower()
-                    j_market["commodities"].append(c)
-                j_stations.append(j_market)
-                # print(" + " + j_market["name"] + " in " + j_market["system"])
-        self.printline(17, 5, "{0} Stationen gefunden".format(len(j_stations)))
-        self.printline(18, 5, "> save stations_db")
-        with open(self.config["localnames"]["stations"], "w") as write_file:
-            json.dump(j_stations, write_file)
-        self.printline(19, 5, "> remove tempfiles")
+            with open(self.config["localnames"]["bodies"], "w") as bodies:
+                with open(self.config["localnames"]["stations"], "w") as stations:
+                    hx = float(self.config["user"]["homex"])
+                    hy = float(self.config["user"]["homey"])
+                    hz = float(self.config["user"]["homez"])
+                    userhome = [ hx, hy, hz ]
+                    for g in galaxy:
+                        dist = math.dist([ g["coords"]["x"], g["coords"]["y"], g["coords"]["z"] ], userhome)
+                        if dist > float(self.config["filter"]["distance"]): continue
+                        for station in g["stations"]:
+                            if not "market" in station: continue
+                            if "Carrier" in station["type"]: continue   # erstmal keine Carrier
+                            j_market = {}
+                            # -- for key, value in station.items(): print(key)
+                            # System: name - coords
+                            j_market["system"] = g["name"]
+                            j_market["coords"] = [ g["coords"]["x"], g["coords"]["y"], g["coords"]["z"] ]
+                            # Market: name - id
+                            j_market["id"] = station["id"]
+                            j_market["name"] = station["name"]
+                            j_market["ls"] = station["distanceToArrival"]
+                            # Prices
+                            j_market["commodities"] = []
+                            # -- for key, value in market.items(): print(key)
+                            commodities = station["market"]["commodities"]
+                            for c in commodities:
+                                c["symbol"] = c["symbol"].lower()
+                                j_market["commodities"].append(c)
+                            j_stations.append(j_market)
+                            stations.write(json.dumps(j_market) + '\n')
+                        if "bodies" in g:
+                            j_body = { }
+                            j_body["system"] = g["name"]
+                            j_body["coords"] = [ g["coords"]["x"], g["coords"]["y"], g["coords"]["z"] ]
+                            j_body["bodies"] = [ ]
+                            for b in g["bodies"]:
+                                body = { }
+                                body["name"] = b["name"]
+                                body["type"] = b["type"]
+                                body["id"] = b["bodyId"]
+                                # belts -> []
+                                # materials -> {}
+                                # signals -> {}{}
+                                if "subType" in b: body["subtype"] = b["subType"]
+                                if "parents" in b: body["parents"] = b["parents"]
+                                j_body["bodies"].append(body)
+                            bodies.write(json.dumps(j_body) + '\n')
+
+        # und gleich merken fürs spielen
+        self.gamedata["stations"] = j_stations
+        self.printline(16, 5, "{0} Stationen gefunden".format(len(j_stations)))
         os.remove(self.config["localnames"]["galaxy_gz"])
         os.remove(self.config["localnames"]["galaxy_json"])
-        os.remove(self.config["localnames"]["galaxy_jsonl"])
-        # und merken fürs spielen
-        self.gamedata["stations"] = j_stations
         self.screen.clear()
         self.screen.refresh()
         self.config["pages"]["activepage"] = "0"
@@ -336,7 +342,7 @@ class PageSettings(PageBasepage):       # 0
         if key == "u" or key == "U": self.config["pages"]["activepage"] = "U"
         if key == "e" or key == "E": self.config["pages"]["events"] = self.scrollSetting(self.config["pages"]["events"], [ "yes", "no" ])
         if key == "a" or key == "A": self.config["pages"]["autopage"] = self.scrollSetting(self.config["pages"]["autopage"], [ "yes", "no" ])
-        if key == "p" or key == "P": self.config["pages"]["priopage"] = self.scrollSetting(self.config["pages"]["priopage"], [ "mining", "cargo" ])
+        if key == "p" or key == "P": self.config["pages"]["priopage"] = self.scrollSetting(self.config["pages"]["priopage"], [ "mission", "cargo" ])
         if key == "j" or key == "J": self.config["distances"]["systems"] = self.scrollSetting(self.config["distances"]["systems"], distances)
         if key == "l" or key == "L": self.config["distances"]["stations"] = self.scrollSetting(self.config["distances"]["stations"], distances)
         if key == "m" or key == "M": self.config["pages"]["edmc"] = self.scrollSetting(self.config["pages"]["edmc"], [ "yes", "no" ])
@@ -463,7 +469,8 @@ class PageCargo(PageBasepage):          # 1
             itemnumber += 1
             self.screen.refresh()
     def showCapacity(self):
-        percent = (self.cargouse / self.cargomax) * 100.0
+        percent = 0
+        if self.cargomax != 0: percent = (self.cargouse / self.cargomax) * 100.0
         filler = ""
         for i in range(0, 100): filler += " "     # vorfüllen
         temp = list(filler)

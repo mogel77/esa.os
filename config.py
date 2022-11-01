@@ -27,6 +27,9 @@ def updateConfig():
     config = configparser.ConfigParser()
     config.read('config.ini')
 
+    # Versionierung - wird zeit
+    checkEntry('esaos', 'version', '0')
+
     # Konfiguration erstellen
     checkEntry('eddir', 'path', 'unset')
     checkEntry('eddir', 'lastlog', 'unsed')
@@ -37,8 +40,8 @@ def updateConfig():
     checkEntry('urls', 'galaxy_gz', 'https://downloads.spansh.co.uk/galaxy_1day.json.gz')
 
     # Dateinamen nach dem Download bzw. zum Speichern der Daten
-    checkEntry('localnames', 'modnames', 'resources/modnames.json')
     checkEntry('localnames', 'stations', 'daten/stations.json')
+    checkEntry('localnames', 'bodies', 'daten/bodies.json')
     # checkEntry('localnames', 'commodities', 'daten/commodities.json')
     checkEntry('localnames', 'galaxy_gz', 'daten/galaxy.gz')
     checkEntry('localnames', 'galaxy_json', 'daten/galaxy.json')
@@ -51,7 +54,8 @@ def updateConfig():
     checkEntry('localnames', 'hangar', 'daten/hangar.json')
     checkEntry('localnames', 'outfit', 'daten/outfit.json')
     checkEntry('localnames', 'asteroid', 'daten/asteroid.json')
-
+    checkEntry('localnames', 'modnames', 'resources/modnames.json')
+    
     # Zeitstempel der Downloads
     checkEntry('downloads', 'commodities', '20220101-000000')
     checkEntry('downloads', 'galaxy_gz', '20220101-000000')

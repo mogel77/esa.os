@@ -11,7 +11,6 @@ import subprocess
 from curses import wrapper
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from os.path import exists
 from threading import Thread
 
 import tools
@@ -86,7 +85,7 @@ class MyFileHandler(FileSystemEventHandler):
         file.seek(cur_pos)
         return does_it
     def openLogfile(self, newlogpath):
-        if not exists(newlogpath): return
+        if not os.path.exists(newlogpath): return
         if self.logfile is not None: self.logfile.close()
         addMessage("debug", "Logfile: " + os.path.basename(newlogpath))
         self.oldlog = newlogpath;
@@ -634,13 +633,11 @@ def autoPage(page):
     pageManager.lastPage = "?"
     if config["pages"]["autopage"] == "yes": config["pages"]["activepage"] = str(page)
     pageManager()
-
 def pageManager():
     if config["pages"]["events"] == "yes":
         pageManager_raw()       # debug-meldungen und Fehler des Programms
     else:
         pageManager_catch()     # alles schön verstecken - hoffentlich
-
 def pageManager_catch():
     try:
         pageManager_raw()
@@ -648,7 +645,6 @@ def pageManager_catch():
         # gamedata["logger"].error("{0}".format(ex))
         gamedata["logger"].exception(ex)
         if "event" in gamedata: gamedata["logger"].error("!!! " + json.dumps(gamedata["event"])) # das wurde "gesendet"
-
 def pageManager_raw():
     global config
     global pagecargo, pageroute, pagesettings,  pagemissions, pagestoredmodules, pagesaasignals, pagelicense, pageshiphangar, pageshipoutfit, pageasteroid, pagedownloads
@@ -685,7 +681,7 @@ def inputManager(key):
 def startEDMC():
     if config["pages"]["edmc"] == "yes":
         gamedata["logger"].info("Autostart für EDMC aktiviert -> " + platform.system())
-        if exists(config["eddir"]["edmc"] + "/EDMarketConnector.py"):
+        if os.path.exists(config["eddir"]["edmc"] + "/EDMarketConnector.py"):
             parameter = [   
                             sys.executable, 
                             config["eddir"]["edmc"] + "/EDMarketConnector.py"
@@ -701,11 +697,19 @@ def startEDMC():
 
 
 
+def prepareVersion():
+    global config, gamedata
+    if not config["esaos"]["version"] == "2":
+        gamedata["logger"].info("Version stimmt nicht - lösche alte Files")
+        if os.path.exists(config["localnames"]["stations"]): os.remove(config["localnames"]["stations"])
+        config["esaos"]["version"] = "2"
+        tools.saveConfig(config, gamedata)
 def main(stdsrc):
     global winheader, winmenu, winevents, winstatus
     global pagecargo, pageroute, pagesettings, pagemissions, pagestoredmodules, pagesaasignals, pagelicense, pageshiphangar, pageshipoutfit, pageasteroid, pagedownloads
 
     if config["pages"]["activepage"] == "U": config["pages"]["activepage"] = "1"
+    prepareVersion()
 
     winheader = windows.WinHeader(config, gamedata)
     winmenu = windows.WinMenu(config, gamedata)
@@ -726,14 +730,15 @@ def main(stdsrc):
     pageManager.lastPage = "?"
 
     pageloading.update()
-    if exists(config["localnames"]["stations"]):
+    if os.path.exists(config["localnames"]["stations"]):
         gamedata["logger"].info("Stationen werden geladen")
         with open(config["localnames"]["stations"], "r") as f:
-            gamedata["stations"] = json.load(f)
+            for line in f:
+                gamedata["stations"].append(json.loads(line))
     else:
         gamedata["logger"].info("keine Stationen vorhanden")
 
-    if exists(config["localnames"]["modnames"]):
+    if os.path.exists(config["localnames"]["modnames"]):
         gamedata["logger"].info("Namen der Module werden geladen")
         with open(config["localnames"]["modnames"], "r") as f:
             gamedata["modnames"] = json.load(f)
@@ -747,7 +752,7 @@ def main(stdsrc):
 
     observer = None
     path = config["eddir"]["path"]
-    if exists(path):
+    if os.path.exists(path):
         event_handler = MyFileHandler(config)
         observer = Observer()
         observer.schedule(event_handler, path, recursive=True)
