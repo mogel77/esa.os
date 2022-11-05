@@ -549,7 +549,7 @@ class PageRoute(PageBasepage):          # 2
                 if system["StarClass"][0] == "D": startype = "*"
                 self.print(position, 5, "{2}   {0:6.1f}ly   {1}".format(distance, name, startype))
             else:
-                self.print(18, 5, "{0:8} {1}   insgesamt {2} Sprünge".format(" ", "...", len(route)))
+                self.print(18, 5, "{0:8} {1}   noch {2} Sprünge".format(" ", "...", self.routestep))
             oldpos = system["StarPos"]
             self.disttotal += distance
             position += 1           # Position für die Ausgabe
