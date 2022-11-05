@@ -78,14 +78,22 @@ class WinMenu(WinBaseWindow):
         self.screen.clear()
         self.update_chatter()
         self.update_menu()
-        self.print(17, 0, "         Menü > ")
+        self.print(1, 0, "         Menü > ")
         self.screen.refresh()
+
+    def printMenuEntry(self, line, text, key):
+        self.print(line, 0, "{0:>14} - {1}".format(text, key))
+        return line + 1
 
     def update_menu(self):
         if not self.config["user"]["license"] == "yes": return
-        modules = [ "Settings", "Cargo", "Route", "Mission", "Module", "Hangar", "Ausstattung", "SAA Scan", "Asteroid Scan" ]
+        modules = [ "Cargo", "Route", "Mission", "Module", "Hangar", "Ausstattung", "SAA Scan", "Asteroid Scan" ]
         for i in range(0, len(modules)):
-            self.print(i + 1, 0, "{0:>14} - {1}".format(modules[i][-14:], i))
+            self.printMenuEntry(i + 3, modules[i][-14:], (i + 1))
+        
+        line = 12
+        line = self.printMenuEntry(line, "Settings", "S")
+        if not self.config["twitter"]["api_key"] == "unset": line = self.printMenuEntry(line, "Twitter", "T")
 
     def update_chatter(self):
         self.vLine(0, 19, 24)

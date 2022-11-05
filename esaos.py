@@ -647,7 +647,8 @@ def pageManager_catch():
         if "event" in gamedata: gamedata["logger"].error("!!! " + json.dumps(gamedata["event"])) # das wurde "gesendet"
 def pageManager_raw():
     global config
-    global pagecargo, pageroute, pagesettings,  pagemissions, pagestoredmodules, pagesaasignals, pagelicense, pageshiphangar, pageshipoutfit, pageasteroid, pagedownloads
+    global pagesettings, pagetwitter
+    global pagecargo, pageroute, pagemissions, pagestoredmodules, pagesaasignals, pagelicense, pageshiphangar, pageshipoutfit, pageasteroid, pagedownloads
     page = config["pages"]["activepage"]
     if config["user"]["license"] == "yes":
         if page == pageManager.lastPage: return
@@ -660,8 +661,10 @@ def pageManager_raw():
         if page == "6": pageshipoutfit.update()
         if page == "7": pagesaasignals.update()
         if page == "8": pageasteroid.update()
-        if page == "0": pagesettings.update()
+        if page == "S": pagesettings.update()
         if page == "U": pagedownloads.update()
+        if page == "T": 
+            if not config["twitter"]["api_key"] == "unset":  pagetwitter.update()
         pageManager.lastPage = page
     else:
         pagelicense.update()
@@ -674,7 +677,8 @@ def inputManager(key):
         pagelicense.handleInput(key)
     else:
         if key == "c" or key == "C": winmenu.handleKey(key)
-        if page == "0": pagesettings.handleInput(key)
+        if page == "S": pagesettings.handleInput(key)
+        if page == "T": pagetwitter.handleInput(key)
 
 
 
@@ -706,7 +710,8 @@ def prepareVersion():
         tools.saveConfig(config, gamedata)
 def main(stdsrc):
     global winheader, winmenu, winevents, winstatus
-    global pagecargo, pageroute, pagesettings, pagemissions, pagestoredmodules, pagesaasignals, pagelicense, pageshiphangar, pageshipoutfit, pageasteroid, pagedownloads
+    global pagesettings, pagetwitter
+    global pagecargo, pageroute, pagemissions, pagestoredmodules, pagesaasignals, pagelicense, pageshiphangar, pageshipoutfit, pageasteroid, pagedownloads
 
     if config["pages"]["activepage"] == "U": config["pages"]["activepage"] = "1"
     prepareVersion()
@@ -727,6 +732,7 @@ def main(stdsrc):
     pageshipoutfit = pages.PageShipOutfit(config, gamedata)
     pageasteroid = pages.PageAsteroid(config, gamedata)
     pagedownloads = pages.PageDownloads(config, gamedata)
+    pagetwitter = pages.PageTwitter(config, gamedata)
     pageManager.lastPage = "?"
 
     pageloading.update()
@@ -773,7 +779,8 @@ def main(stdsrc):
             if input == "6": config["pages"]["activepage"] = "6"
             if input == "7": config["pages"]["activepage"] = "7"
             if input == "8": config["pages"]["activepage"] = "8"
-            if input == "0": config["pages"]["activepage"] = "0"
+            if input == "s" or input == "S": config["pages"]["activepage"] = "S"
+            if input == "t" or input == "T": config["pages"]["activepage"] = "T"
             # ! douh !
             inputManager(input)
     except KeyboardInterrupt:

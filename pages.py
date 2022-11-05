@@ -7,6 +7,7 @@ import math
 import json
 import time
 import random
+import tweepy
 from os.path import exists
 from datetime import datetime
 
@@ -303,7 +304,7 @@ class PageDownloads(PageBasepage):      # U
         self.screen.clear()
         self.screen.refresh()
         self.config["pages"]["activepage"] = "0"
-class PageSettings(PageBasepage):       # 0
+class PageSettings(PageBasepage):       # S
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
 
@@ -371,6 +372,24 @@ class PageSettings(PageBasepage):       # 0
                 self.config["user"]["homey"] = "72.46875"
                 self.config["user"]["homez"] = "-20.65625"
         self.update()
+class PageTwitter(PageBasepage):        # T
+    def __init__(self, config, gamedata):
+        super().__init__(config, gamedata)
+        auth = tweepy.OAuth2BearerHandler(self.config["twitter"]["bearer_token"])
+        self.twitter = tweepy.API(auth)
+        try:
+            self.twitter.verify_credentials()
+            self.gamedata["logger"].info('Twitter: Successful Authentication')
+        except:
+            self.gamedata["logger"].info('Twitter: Failed authentication')
+
+    def handleInput(self, key):
+        pass
+
+    def update(self):
+        self.screen.clear()
+        self.print(5, 10, "- Twitter Optionen -")
+        self.screen.refresh()
 
 
 

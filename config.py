@@ -35,6 +35,15 @@ def updateConfig():
     checkEntry('eddir', 'lastlog', 'unsed')
     checkEntry('eddir', 'edmc', '../EDMarketConnector')
 
+    # Twitter-Log
+    checkEntry('twitter', 'api_key', 'unset')
+    checkEntry('twitter', 'api_secret', 'unset')
+    checkEntry('twitter', 'access_token', 'unset')
+    checkEntry('twitter', 'access_secret', 'unset')
+    checkEntry('twitter', 'client_token', 'unset')
+    checkEntry('twitter', 'client_secret', 'unset')
+    checkEntry('twitter', 'bearer_token', 'unset')
+
     # Download URLS
     # checkEntry('urls', 'commodities', 'https://edgalaxydata.space/EDDB/dumps/commodities.json')
     checkEntry('urls', 'galaxy_gz', 'https://downloads.spansh.co.uk/galaxy_1day.json.gz')

@@ -28,6 +28,7 @@ Ja, der muss zugestimmt werden. Wenn der Pfad für das Journal in der Konfigurat
 
 * Python 3.10.6 (zumindest lief es damit auf meinem Rechner)
 * vermutlich `curses` bzw. `ncurses`
+* tweepy
 
 # TODO + Bugs und ~~Probleme~~ Herausforderungen
 
