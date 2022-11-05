@@ -7,6 +7,7 @@ import math
 import json
 import time
 import random
+import sys
 import tweepy
 from os.path import exists
 from datetime import datetime
@@ -246,6 +247,7 @@ class PageDownloads(PageBasepage):      # U
         self.printline(15, 5, "> get stations from galaxy.json -max {0}ly".format(self.config["filter"]["distance"]))
         j_stations = []     # Array
         j_bodies = []
+        firsthundret = 0
         with open(self.config["localnames"]["galaxy_json"], "r") as f:
             galaxy = json.load(f)
             with open(self.config["localnames"]["bodies"], "w") as bodies:
@@ -260,6 +262,10 @@ class PageDownloads(PageBasepage):      # U
                         for station in g["stations"]:
                             if not "market" in station: continue
                             if "Carrier" in station["type"]: continue   # erstmal keine Carrier
+                            if firsthundret < 100:
+                                for key in station: self.gamedata["logger"].info(" - " + key)
+                            else:
+                                sys.exit("done")
                             j_market = {}
                             # -- for key, value in station.items(): print(key)
                             # System: name - coords
@@ -519,6 +525,7 @@ class PageRoute(PageBasepage):          # 2
             self.showProgress()
         else:
             self.update_clear()
+        self.showServices()
         self.screen.refresh()
 
     def update_clear(self):
@@ -549,7 +556,7 @@ class PageRoute(PageBasepage):          # 2
                 if system["StarClass"][0] == "D": startype = "*"
                 self.print(position, 5, "{2}   {0:6.1f}ly   {1}".format(distance, name, startype))
             else:
-                self.print(18, 5, "{0:8} {1}   noch {2} Sprünge".format(" ", "...", self.routestep))
+                self.print(18, 5, "{0:8} {1}   noch {2} Sprünge".format(" ", "...", len(route) - self.routestep - 1))
             oldpos = system["StarPos"]
             self.disttotal += distance
             position += 1           # Position für die Ausgabe
@@ -570,6 +577,8 @@ class PageRoute(PageBasepage):          # 2
         self.print(20, 2, "{0}".format(self.gamedata["route"][0]["StarSystem"]))
         self.print(20, 74, "{0:>30}".format(self.gamedata["route"][routemax - 1]["StarSystem"]))
         self.print(20, 35, "{0:^20}".format("{0:.1f}ly".format(self.disttotal)))
+    def showServices(self):
+        pass
 class PageMissions(PageBasepage):       # 3
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
