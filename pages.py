@@ -133,7 +133,7 @@ class PageBasepage:
             if not "services" in s: continue
             found = False
             for service in s["services"]: 
-                if service == servicename: found = True
+                if service.casefold() == servicename.casefold(): found = True
             if not found: continue
             distance = math.dist(playerpos, systempos)
             station = s
@@ -392,7 +392,7 @@ class PageSettings(PageBasepage):       # S
                 self.config["user"]["homey"] = "72.46875"
                 self.config["user"]["homez"] = "-20.65625"
         self.update()
-class PageTwitter(PageBasepage):        # T
+class PageTwitter(PageBasepage):        # T - im Moment unnütze - Twitter mag mich nicht
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         auth = tweepy.OAuth2BearerHandler(self.config["twitter"]["bearer_token"])
@@ -588,17 +588,18 @@ class PageRoute(PageBasepage):          # 2
         self.print(20, 74, "{0:>30}".format(self.gamedata["route"][routemax - 1]["StarSystem"]))
         self.print(20, 35, "{0:^20}".format("{0:.1f}ly".format(self.disttotal)))
     def showServices(self):
+        services = []
+        for s in self.config["pages"]["services"].split(","): services.append(s.strip())
         playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
         line = 0
         self.print(1, 50, "Dienstleistungen in der Nähe")
-        for service in [ "Repair", "Market", "Contacts", "Missions", "Outfitting", "Restock", "Refuel", "Tuning", "Workshop" ]: # need more
+        for service in services:
             station = self.getStationWithService(service)
             if station is None: continue
             systempos = [ float(station["coords"][0]), float(station["coords"][1]), float(station["coords"][2]) ]
             distance = math.dist(playerpos, systempos)
             self.print(3 + line, 50, "{0} in {1} ({2} [{3:.1f}ly])".format(service, station["system"], station["name"], distance))
             line = line + 1
-        
 class PageMissions(PageBasepage):       # 3
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)

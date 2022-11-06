@@ -104,7 +104,9 @@ def updateConfig():
     checkEntry('pages', 'priopage', 'mining')       # Seite nach einem NavRouteClear (Mining oder Cargo)
     checkEntry('pages', 'autopage','yes')           # later - automatisches Wechseln der Seiten bei passendem Event
     checkEntry('pages', 'events', 'no')             # debug-Ausgabe - oder auch knallen der Exception (also nicht verstecken)
-    checkEntry('pages', 'edmc', 'no')          # Autostart von EDMC
+    checkEntry('pages', 'edmc', 'no')               # Autostart von EDMC
+    checkEntry('pages', 'services', 'Repair, Mining, Market, Restock, Refuel')  # die Services werden angezeigt
+    checkEntry('pages', 'services_known', '')       # Services die über alle Stationen angezeigt werden
 
     # und dann schreiben
     with open(r"config.ini", 'w') as configfile:
