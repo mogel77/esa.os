@@ -122,6 +122,22 @@ class PageBasepage:
                         mindistance = distance
                         self.result_distance = mindistance
         return market
+    def getStationWithService(self, servicename):
+        station = None                                          # die anbietende Station
+        distance = 120000                                       # müsste reichen
+        # wird IMMER global gesucht
+        playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
+        for s in self.gamedata["stations"]:
+            systempos = [ float(s["coords"][0]), float(s["coords"][1]), float(s["coords"][2]) ]
+            if distance < math.dist(playerpos, systempos): continue
+            if not "services" in s: continue
+            found = False
+            for service in s["services"]: 
+                if service == servicename: found = True
+            if not found: continue
+            distance = math.dist(playerpos, systempos)
+            station = s
+        return station
     def getMission4ID(self, missionid):
         if len(self.gamedata["missions"]) == 0: return None
         for m in self.gamedata["missions"]:
@@ -262,10 +278,6 @@ class PageDownloads(PageBasepage):      # U
                         for station in g["stations"]:
                             if not "market" in station: continue
                             if "Carrier" in station["type"]: continue   # erstmal keine Carrier
-                            if firsthundret < 100:
-                                for key in station: self.gamedata["logger"].info(" - " + key)
-                            else:
-                                sys.exit("done")
                             j_market = {}
                             # -- for key, value in station.items(): print(key)
                             # System: name - coords
@@ -275,6 +287,8 @@ class PageDownloads(PageBasepage):      # U
                             j_market["id"] = station["id"]
                             j_market["name"] = station["name"]
                             j_market["ls"] = station["distanceToArrival"]
+                            j_market["services"] = []
+                            if "services" in station:  j_market["services"] = station["services"]
                             # Prices
                             j_market["commodities"] = []
                             # -- for key, value in market.items(): print(key)
@@ -510,12 +524,10 @@ class PageRoute(PageBasepage):          # 2
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadRoute()
-
     def loadRoute(self):
         if not exists(self.config["eddir"]["path"] + "/NavRoute.json"): return
         with open(self.config["eddir"]["path"] + "/NavRoute.json", "r") as f:
             self.gamedata["route"] = json.load(f)["Route"]
-
     def update(self):
         self.loadRoute()
         self.screen.clear()
@@ -527,10 +539,8 @@ class PageRoute(PageBasepage):          # 2
             self.update_clear()
         self.showServices()
         self.screen.refresh()
-
     def update_clear(self):
-        self.print(5, 10, "es ist im Moment keine Reise geplant")
-
+        self.print(5, 5, "es ist im Moment keine Reise geplant")
     def update_route(self):
         route = self.gamedata["route"]
         fuelstar = "OBAFGKM" # Sterne zum Tanken
@@ -578,7 +588,17 @@ class PageRoute(PageBasepage):          # 2
         self.print(20, 74, "{0:>30}".format(self.gamedata["route"][routemax - 1]["StarSystem"]))
         self.print(20, 35, "{0:^20}".format("{0:.1f}ly".format(self.disttotal)))
     def showServices(self):
-        pass
+        playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
+        line = 0
+        self.print(1, 50, "Dienstleistungen in der Nähe")
+        for service in [ "Repair", "Market", "Contacts", "Missions", "Outfitting", "Restock", "Refuel", "Tuning", "Workshop" ]: # need more
+            station = self.getStationWithService(service)
+            if station is None: continue
+            systempos = [ float(station["coords"][0]), float(station["coords"][1]), float(station["coords"][2]) ]
+            distance = math.dist(playerpos, systempos)
+            self.print(3 + line, 50, "{0} in {1} ({2} [{3:.1f}ly])".format(service, station["system"], station["name"], distance))
+            line = line + 1
+        
 class PageMissions(PageBasepage):       # 3
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
