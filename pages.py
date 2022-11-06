@@ -288,7 +288,12 @@ class PageDownloads(PageBasepage):      # U
                             j_market["name"] = station["name"]
                             j_market["ls"] = station["distanceToArrival"]
                             j_market["services"] = []
-                            if "services" in station:  j_market["services"] = station["services"]
+                            if "services" in station: 
+                                j_market["services"] = station["services"]
+                                for service in j_market["services"]:
+                                    if not service in self.config["pages"]["services_known"]:
+                                        if len(self.config["pages"]["services_known"]) > 0: self.config["pages"]["services_known"] += ", "
+                                        self.config["pages"]["services_known"] += service
                             # Prices
                             j_market["commodities"] = []
                             # -- for key, value in market.items(): print(key)
