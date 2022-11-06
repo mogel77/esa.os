@@ -703,10 +703,11 @@ def startEDMC():
 
 def prepareVersion():
     global config, gamedata
-    if not config["esaos"]["version"] == "2":
+    VERSION_NEED = "3"
+    if not config["esaos"]["version"] == VERSION_NEED:
         gamedata["logger"].info("Version stimmt nicht - lösche alte Files")
         if os.path.exists(config["localnames"]["stations"]): os.remove(config["localnames"]["stations"])
-        config["esaos"]["version"] = "2"
+        config["esaos"]["version"] = VERSION_NEED
         tools.saveConfig(config, gamedata)
 def main(stdsrc):
     global winheader, winmenu, winevents, winstatus

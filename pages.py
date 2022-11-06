@@ -597,14 +597,15 @@ class PageRoute(PageBasepage):          # 2
         for s in self.config["pages"]["services"].split(","): services.append(s.strip())
         playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
         line = 0
-        self.print(1, 50, "Dienstleistungen in der Nähe")
         for service in services:
             station = self.getStationWithService(service)
             if station is None: continue
             systempos = [ float(station["coords"][0]), float(station["coords"][1]), float(station["coords"][2]) ]
             distance = math.dist(playerpos, systempos)
-            self.print(3 + line, 50, "{0} in {1} ({2} [{3:.1f}ly])".format(service, station["system"], station["name"], distance))
+            self.print(2 * line + 0, 50, "{0} in {1}".format(service, station["system"]))
+            self.print(2 * line + 1, 50, "   {0:.1f}ly bei {1}".format(distance, station["name"]))
             line = line + 1
+            if line > 11: break
 class PageMissions(PageBasepage):       # 3
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
