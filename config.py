@@ -107,6 +107,7 @@ def updateConfig():
     checkEntry('pages', 'edmc', 'no')               # Autostart von EDMC
     checkEntry('pages', 'services', 'Repair, Mining, Market, Restock, Refuel')  # die Services werden angezeigt
     checkEntry('pages', 'services_known', '')       # Services die über alle Stationen angezeigt werden
+    checkEntry('pages', 'coloring', 'yes')          # wenn Farben verwendet werden sollen
 
     # und dann schreiben
     with open(r"config.ini", 'w') as configfile:

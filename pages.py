@@ -47,6 +47,7 @@ class PageBasepage:
                         color_escape = True
                         self.gamedata["logger"].info("Color-Escape: On")
                         continue
+                    if self.config["pages"]["coloring"] == "no": color_color = 0
                     if posx < curses.COLS - 1: self.screen.addstr(posy, posx, char, curses.color_pair(color_color))
                     color_escape = False
                     posx += 1
@@ -356,7 +357,7 @@ class PageSettings(PageBasepage):       # S
         super().__init__(config, gamedata)
 
     def formatSetting(self, key, option, text):
-        return "({0}) {1:>7} {2}".format(key, option, text)
+        return "(~y{0}~w) {1:>7} {2}".format(key, option, text)
 
     def scrollSetting(self, current, options):
         index = 0
@@ -380,6 +381,7 @@ class PageSettings(PageBasepage):       # S
         self.print(6, 5, self.formatSetting("L", self.config["distances"]["stations"], "max. Entfernung der Stationen für Verkauf (Ls)"))
         self.print(7, 5, self.formatSetting("A", self.config["pages"]["autopage"], "automatisch die Seiten umschalten"))
         self.print(8, 5, self.formatSetting("P", self.config["pages"]["priopage"], "Seite nach dem Ende der Route"))
+        self.print(9, 5, self.formatSetting("G", self.config["pages"]["coloring"], "Farben in der Darstellung nutzen"))
         self.print(14, 5, self.formatSetting("M", self.config["pages"]["edmc"], "Autostart von EDMarketConnector (experimentell)"))
         self.print(15, 5, self.formatSetting("F", self.config["filter"]["distance"], "Systeme weiter vom Heimatsystem, werden gelöscht/ignoriert (Ly)"))
         self.print(16, 5, self.formatSetting("E", self.config["pages"]["events"], "Events anzeigen (Debug-Funktion)"))
@@ -388,13 +390,14 @@ class PageSettings(PageBasepage):       # S
     def handleInput(self, key):
         distances = [ 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000 ]
         if key == "u" or key == "U": self.config["pages"]["activepage"] = "U"
-        if key == "e" or key == "E": self.config["pages"]["events"] = self.scrollSetting(self.config["pages"]["events"], [ "yes", "no" ])
-        if key == "a" or key == "A": self.config["pages"]["autopage"] = self.scrollSetting(self.config["pages"]["autopage"], [ "yes", "no" ])
-        if key == "p" or key == "P": self.config["pages"]["priopage"] = self.scrollSetting(self.config["pages"]["priopage"], [ "mission", "cargo" ])
         if key == "j" or key == "J": self.config["distances"]["systems"] = self.scrollSetting(self.config["distances"]["systems"], distances)
         if key == "l" or key == "L": self.config["distances"]["stations"] = self.scrollSetting(self.config["distances"]["stations"], distances)
+        if key == "a" or key == "A": self.config["pages"]["autopage"] = self.scrollSetting(self.config["pages"]["autopage"], [ "yes", "no" ])
+        if key == "p" or key == "P": self.config["pages"]["priopage"] = self.scrollSetting(self.config["pages"]["priopage"], [ "mission", "cargo" ])
+        if key == "g" or key == "G": self.config["pages"]["coloring"] = self.scrollSetting(self.config["pages"]["coloring"], [ "yes", "no" ])
         if key == "m" or key == "M": self.config["pages"]["edmc"] = self.scrollSetting(self.config["pages"]["edmc"], [ "yes", "no" ])
         if key == "f" or key == "F": self.config["filter"]["distance"] = self.scrollSetting(self.config["filter"]["distance"], distances)
+        if key == "e" or key == "E": self.config["pages"]["events"] = self.scrollSetting(self.config["pages"]["events"], [ "yes", "no" ])
         if key == "h" or key == "H":
             home = self.scrollSetting(self.config["user"]["homesys"], [ "Sol", "Achenar", "Alioth", self.config["user"]["system"] ])
             # Pauschal das aktuelle System setzen
