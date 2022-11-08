@@ -23,13 +23,35 @@ class PageBasepage:
         self.screen = curses.newwin(22, 110, 7, 20)
         self.config = config
         self.gamedata = gamedata
+        curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
+        curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
+        curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
     def print(self, posy, posx, content):
+        color_escape = False
+        color_color = 0         #   -_-
         try:
             if len(content) > 0:
                 for i in range(0, len(content)):
-                    if posx + i < curses.COLS - 1: self.screen.addstr(posy, posx + i, content[i])
+                    char = content[i]
+                    if color_escape:
+                        if char == "w": color_color = 0
+                        if char == "b": color_color = 1
+                        if char == "r": color_color = 2
+                        if char == "g": color_color = 3
+                        if char == "y": color_color = 4
+                        color_escape = False
+                        self.gamedata["logger"].info("Color-Escape: Off -> " + char)
+                        continue
+                    if char == "~":
+                        color_escape = True
+                        self.gamedata["logger"].info("Color-Escape: On")
+                        continue
+                    if posx < curses.COLS - 1: self.screen.addstr(posy, posx, char, curses.color_pair(color_color))
+                    color_escape = False
+                    posx += 1
             else:
-                self.screen.addstr(posy, posx, "")
+                self.screen.addstr(posy, posx, "", curses.color_pair(0))
         except curses.error:
             pass # ! douh ! - schlucken ist immer doof
     def countDrones(self):
@@ -602,7 +624,7 @@ class PageRoute(PageBasepage):          # 2
             if station is None: continue
             systempos = [ float(station["coords"][0]), float(station["coords"][1]), float(station["coords"][2]) ]
             distance = math.dist(playerpos, systempos)
-            self.print(2 * line + 0, 50, "{0} in {1}".format(service, station["system"]))
+            self.print(2 * line + 0, 50, "~g{0}~w in ~g{1}~w".format(service, station["system"]))
             self.print(2 * line + 1, 50, "   {0:.1f}ly bei {1}".format(distance, station["name"]))
             line = line + 1
             if line > 11: break
