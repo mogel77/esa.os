@@ -41,11 +41,9 @@ class PageBasepage:
                         if char == "g": color_color = 3
                         if char == "y": color_color = 4
                         color_escape = False
-                        self.gamedata["logger"].info("Color-Escape: Off -> " + char)
                         continue
                     if char == "~":
                         color_escape = True
-                        self.gamedata["logger"].info("Color-Escape: On")
                         continue
                     if self.config["pages"]["coloring"] == "no": color_color = 0
                     if posx < curses.COLS - 1: self.screen.addstr(posy, posx, char, curses.color_pair(color_color))
