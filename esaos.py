@@ -230,6 +230,10 @@ def Event_FSDJump(entry):
         else:
             return "{0} ({1})".format(sysfaction, sysstate)
     global winheader, winstatus
+    if "JumpDist" in entry:
+        travel = int(config["user"]["travel"])
+        travel += int(entry["JumpDist"])
+        config["user"]["travel"] = str(travel)
     # 'StarSystem': 'Sol'
     # 'StarPos': [0.0, 0.0, 0.0]
     config["user"]["system"] = entry["StarSystem"]
@@ -679,6 +683,7 @@ def inputManager(key):
         if key == "c" or key == "C": winmenu.handleKey(key)
         if page == "S": pagesettings.handleInput(key)
         if page == "T": pagetwitter.handleInput(key)
+        if page == "2": pageroute.handleInput(key)
 
 
 

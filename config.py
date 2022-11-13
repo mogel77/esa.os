@@ -99,6 +99,7 @@ def updateConfig():
     checkEntry('user', 'squadname', 'Einzelkämpfer')
     checkEntry('user', 'squadrank', '0')
     checkEntry('user', 'channel', 'auto')
+    checkEntry('user', 'travel', '0')               # gesamte Resiedistanz
 
     # Seitenmanagement
     checkEntry('pages', 'activepage','1')           # aktive Seite

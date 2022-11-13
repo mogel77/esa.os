@@ -568,6 +568,7 @@ class PageRoute(PageBasepage):          # 2
         if len(self.gamedata["route"]) > 0:
             self.update_route()
             self.showProgress()
+            self.showTravel()
         else:
             self.update_clear()
         self.showServices()
@@ -645,6 +646,14 @@ class PageRoute(PageBasepage):          # 2
             self.print(2 * line + 1, 50, "   {0:.1f}ly bei {1}".format(distance, station["name"]))
             line = line + 1
             if line > 11: break
+    def showTravel(self):
+        travel = "(~yR~w) Reiseroute: {0}ly total".format(self.config["user"]["travel"])
+        self.print(18, 68, "{0:>40}".format(travel))
+    def handleInput(self, key):
+        if key == "r" or key == "R":
+            self.config["user"]["travel"] = "0"
+            self.update()
+
 class PageMissions(PageBasepage):       # 3
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
