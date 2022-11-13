@@ -79,6 +79,7 @@ def updateConfig():
     # Entfernungen der Stationen
     checkEntry('distances', 'stations', '5000')     # Ls
     checkEntry('distances', 'systems', '200')       # Ly
+    checkEntry('distances', 'carrier', 'no')        # ob auch Carrier erlaubt sind
 
     # Details zum Benutzer
     checkEntry('user', 'license', 'no')             # yes fürs Akzeptieren (Verweis auf EDMC & Co)

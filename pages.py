@@ -280,8 +280,9 @@ class PageDownloads(PageBasepage):      # U
         with gzip.open(self.config["localnames"]["galaxy_gz"], 'rb') as f_in:
             with open(self.config["localnames"]["galaxy_json"], 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
-
-        self.printline(15, 5, "> get stations from galaxy.json -max {0}ly".format(self.config["filter"]["distance"]))
+        usecarrier = "-nocarrier"
+        if self.config["distances"]["carrier"] == "yes": usecarrier = "-usecarrier"
+        self.printline(15, 5, "> get stations from galaxy.json -max {0}ly {1}".format(self.config["filter"]["distance"], usecarrier))
         j_stations = []     # Array
         j_bodies = []
         firsthundret = 0
@@ -298,7 +299,9 @@ class PageDownloads(PageBasepage):      # U
                         if dist > float(self.config["filter"]["distance"]): continue
                         for station in g["stations"]:
                             if not "market" in station: continue
-                            if "Carrier" in station["type"]: continue   # erstmal keine Carrier
+                            if self.config["distances"]["carrier"] == "no":
+                                if "Carrier" in station["type"]:
+                                    continue   # erstmal keine Carrier
                             j_market = {}
                             # -- for key, value in station.items(): print(key)
                             # System: name - coords
@@ -377,19 +380,21 @@ class PageSettings(PageBasepage):       # S
         self.print(4, 5, self.formatSetting("H", self.config["user"]["homesys"], "Heimatsystem"))
         self.print(5, 5, self.formatSetting("J", self.config["distances"]["systems"], "max. Entfernung der Systeme für Verkauf (Ly)"))
         self.print(6, 5, self.formatSetting("L", self.config["distances"]["stations"], "max. Entfernung der Stationen für Verkauf (Ls)"))
-        self.print(7, 5, self.formatSetting("A", self.config["pages"]["autopage"], "automatisch die Seiten umschalten"))
-        self.print(8, 5, self.formatSetting("P", self.config["pages"]["priopage"], "Seite nach dem Ende der Route"))
-        self.print(9, 5, self.formatSetting("G", self.config["pages"]["coloring"], "Farben in der Darstellung nutzen"))
+        self.print(7, 5, self.formatSetting("K", self.config["distances"]["carrier"], "Carrier erlauben (bei Update + kein Prüfung auf Landeerlaubnis)"))
+        self.print(8, 5, self.formatSetting("A", self.config["pages"]["autopage"], "automatisch die Seiten umschalten"))
+        self.print(9, 5, self.formatSetting("P", self.config["pages"]["priopage"], "Seite nach dem Ende der Route"))
+        self.print(10, 5, self.formatSetting("G", self.config["pages"]["coloring"], "Farben in der Darstellung nutzen"))
         self.print(14, 5, self.formatSetting("M", self.config["pages"]["edmc"], "Autostart von EDMarketConnector (experimentell)"))
         self.print(15, 5, self.formatSetting("F", self.config["filter"]["distance"], "Systeme weiter vom Heimatsystem, werden gelöscht/ignoriert (Ly)"))
         self.print(16, 5, self.formatSetting("E", self.config["pages"]["events"], "Events anzeigen (Debug-Funktion)"))
         self.screen.refresh()
 
     def handleInput(self, key):
-        distances = [ 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000 ]
+        distances = [ 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000 ]
         if key == "u" or key == "U": self.config["pages"]["activepage"] = "U"
         if key == "j" or key == "J": self.config["distances"]["systems"] = self.scrollSetting(self.config["distances"]["systems"], distances)
         if key == "l" or key == "L": self.config["distances"]["stations"] = self.scrollSetting(self.config["distances"]["stations"], distances)
+        if key == "k" or key == "K": self.config["distances"]["carrier"] = self.scrollSetting(self.config["distances"]["carrier"], [ "yes", "no" ])
         if key == "a" or key == "A": self.config["pages"]["autopage"] = self.scrollSetting(self.config["pages"]["autopage"], [ "yes", "no" ])
         if key == "p" or key == "P": self.config["pages"]["priopage"] = self.scrollSetting(self.config["pages"]["priopage"], [ "mission", "cargo" ])
         if key == "g" or key == "G": self.config["pages"]["coloring"] = self.scrollSetting(self.config["pages"]["coloring"], [ "yes", "no" ])
