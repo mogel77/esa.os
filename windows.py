@@ -78,7 +78,7 @@ class WinMenu(WinBaseWindow):
         self.screen.clear()
         self.update_chatter()
         self.update_menu()
-        self.print(1, 0, "         Menü > ")
+        self.print(1, 0, "          Menü > ")
         self.screen.refresh()
 
     def printMenuEntry(self, line, text, key):
