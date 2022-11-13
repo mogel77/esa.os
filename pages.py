@@ -576,7 +576,6 @@ class PageRoute(PageBasepage):          # 2
         position = 0
         jumps = 0
         found = False
-        lastsystem = None
         self.routestep = 0
         for system in route:
             if system["StarSystem"] == self.config["user"]["system"]:
@@ -599,17 +598,29 @@ class PageRoute(PageBasepage):          # 2
             self.disttotal += distance
             position += 1           # Position für die Ausgabe
             jumps += 1              # Anzahl der noch vorhandenen Sprünge
-            lastsystem = system
         if position > 16: position = 16
         self.screen.refresh()
     def showProgress(self):
+        fuelstar = "OBAFGKM" # Sterne zum Tanken
         routemax = len(self.gamedata["route"])
         if routemax <= 1: return # Sec-Check
-        percent = (self.routestep / routemax) * 100.0
         filler = ""
         for i in range(0, 100): filler += "-"     # vorfüllen
         temp = list(filler)
-        if percent < 100: temp[int(percent)] = "|"     # auffüllen
+        # Problemsterne anzeigen
+        star = 0
+        for system in self.gamedata["route"]:
+            star += 1
+            startype = system["StarClass"]
+            if startype in fuelstar:
+                continue
+            startype = "!"
+            pos = star / len(self.gamedata["route"]) * 100
+            if system["StarClass"][0] == "D": startype = "*"
+            if pos < 100: temp[int(pos)] = startype
+        # aktuelle Position
+        percent = (self.routestep / routemax) * 100.0
+        if percent < 100: temp[int(percent)] = "X"     # Position anzeigen
         filler = "".join(temp)
         self.print(21, 2, "[{0}]".format(filler))
         self.print(20, 2, "{0}".format(self.gamedata["route"][0]["StarSystem"]))
