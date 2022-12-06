@@ -267,7 +267,8 @@ class PageDownloads(PageBasepage):      # U
     def download(self, key):
         url = self.config["urls"][key]
         name = self.config["localnames"][key]
-        r = requests.get(url, allow_redirects=True)
+        headers = { "User-Agent" : "Github / ESA.OS (Elite Dangerous Game Assistant)" }
+        r = requests.get(url, allow_redirects=True, headers=headers)
         open(name, 'wb').write(r.content)
 
     def printline(self, y, x, text):
@@ -595,7 +596,7 @@ class PageRoute(PageBasepage):          # 2
         if position > 16: position = 16
         self.screen.refresh()
     def showProgress(self):
-        fuelstar = "OBAFGKM" # Sterne zum Tanken
+        fuelstar = "KGBMOFA" # Sterne zum Tanken
         routemax = len(self.gamedata["route"])
         if routemax <= 1: return # Sec-Check
         filler = ""
@@ -1280,6 +1281,7 @@ class PageSettings(PageBasepage):
             self.subpage.chooseSpecialFunction(self.selectedLine)
         self.subpage.handleInput(key)
         self.update()
+        self.screen.refresh()
     def update(self):
         self.screen.clear()
         self.print(0, 2, self.arrowLeft + " ~yHOME~w/~yEND~w " + self.arrowRight + "  |")
@@ -1296,7 +1298,6 @@ class PageSettings(PageBasepage):
             pos += 1 # und noch den Pipe dazu
         self.subpage.update()
         self.screen.refresh()
-
 class PageSettingsSubpage:
     def __init__(self, config, gamedata, basepage):
         self.config = config
@@ -1341,11 +1342,11 @@ class PageSettingsSubpage:
         # selected - aktuell ausgewählt
         # comment - Information zur option
         # options - eine Liste mit allen Informationen
-        self.print(line + 5, 7, "~g{0:>10}~w".format(current))
-        self.print(line + 5, 20, comment)
+        self.print(line + 5, 7, "~g{0:>15}~w".format(current))
+        self.print(line + 5, 25, comment)
         if line == self.basepage.selectedLine:
             self.print(line + 5, 5, "~y" + self.arrowRight + "~w")
-            self.print(line + 5, 18, "~y" + self.arrowLeft + "~w")
+            self.print(line + 5, 23, "~y" + self.arrowLeft + "~w")
     def print(self, posy, posx, content):
         self.basepage.print(posy, posx, content)
 
@@ -1354,8 +1355,6 @@ class PageSettingsMain(PageSettingsSubpage):
         super().__init__(config, gamedata, basepage)
     def getSubPageName(self):
         return "Settings"
-    def handleInput(self, key):
-        pass
     def getOptionCount(self):
         return 10
     def update(self):
@@ -1405,19 +1404,55 @@ class PageSettingsMain(PageSettingsSubpage):
         if line == 8: return distances
         if line == 9: return [ "yes", "no" ]
     def chooseSpecialFunction(self, line):
-        self.gamedata["logger"].warn("choose special function")
-        if line == 0: self.config["pages"]["activepage"] = "U"
-
-
-
-
+        if line == 0: 
+            self.config["pages"]["activepage"] = "U"
+            self.gamedata["logger"].warn("Update für Sternensysteme ausgelöst")
 
 class PageSettingsServices(PageSettingsSubpage):
     def __init__(self, config, gamedata, basepage):
         super().__init__(config, gamedata, basepage)
     def getSubPageName(self):
         return "Services"
-    def handleInput(self, key):
-        self.gamedata["logger"].warn("handleInput() in services")
+    def getOptionCount(self):
+        return 8
     def update(self):
         self.print(2, 5, "Liste der Services in der Nähe")
+        for i in range(0, self.getOptionCount()):
+            self.updateOptionLine(i, self.getOptionValueSelected(i), "Service Anzeige für Zeile " + str(i + 1))
+    def splitOptionsUsed(self):
+        options = self.config["pages"]["services"].split(", ")
+        # self.gamedata["logger"].info(str(len(options)) + " Anzahl an Optionen")
+        for i in range(len(options) - 1):
+            if options[i] == "":
+                options[i] = "Dock"
+        while len(options) < self.getOptionCount():
+            options.append("Dock")
+        return options
+    def splitOptionsKnown(self):
+        options = self.config["pages"]["services_known"].split(", ")
+#        for i in range(0, len(options)):
+#            self.gamedata["logger"].info(" - '" + options[i] + "'")
+        return options
+    def getOptionValueSelected(self, line):
+        alloptions = self.getOptionValuePossible(line)
+        options = self.splitOptionsUsed()
+        if (line < 0):
+            return alloptions[0]
+        if line >= len(options):
+            return alloptions[0]
+        return options[line]
+    def setOptionValueSelected(self, line, option):
+        result = ""
+        alloptions = self.splitOptionsUsed()
+        for i in range(0, len(alloptions)):
+            if alloptions[i] == "":
+                continue
+            if i != 0:
+                result += ", "
+            if i == line:
+                result += option
+            else:
+                result += alloptions[i]
+        self.config["pages"]["services"] = result
+    def getOptionValuePossible(self, line):
+        return self.config["pages"]["services_known"].split(", ")

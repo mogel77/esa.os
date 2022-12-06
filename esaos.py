@@ -787,6 +787,8 @@ def main(stdsrc):
             # ! douh !
             pageManager()
             inputManager(input) # alle anderen Tasten werden hier pro Page behandelt
+            pageManager()
+            # ! douh !
     except KeyboardInterrupt:
         if not observer is None: observer.stop()
     if not observer is None: observer.join()
