@@ -737,6 +737,7 @@ def main(stdsrc):
     pageasteroid = pages.PageAsteroid(config, gamedata)
     pagedownloads = pages.PageDownloads(config, gamedata)
     pageManager.lastNumber  = "?"
+    pageManager.currentPage = pagecargo # pauschal
 
     pageloading.update()
     if os.path.exists(config["localnames"]["stations"]):
@@ -772,17 +773,17 @@ def main(stdsrc):
             winevents.update()
             winheader.update()
             winmenu.update()
-            input = stdscr.getkey()
+            input = stdscr.getch()
             # ! douh !
-            if input == "1": config["pages"]["activepage"] = "1"
-            if input == "2": config["pages"]["activepage"] = "2"
-            if input == "3": config["pages"]["activepage"] = "3"
-            if input == "4": config["pages"]["activepage"] = "4"
-            if input == "5": config["pages"]["activepage"] = "5"
-            if input == "6": config["pages"]["activepage"] = "6"
-            if input == "7": config["pages"]["activepage"] = "7"
-            if input == "8": config["pages"]["activepage"] = "8"
-            if input == "s" or input == "S": config["pages"]["activepage"] = "S"
+            if chr(input) == "1": config["pages"]["activepage"] = "1"
+            if chr(input) == "2": config["pages"]["activepage"] = "2"
+            if chr(input) == "3": config["pages"]["activepage"] = "3"
+            if chr(input) == "4": config["pages"]["activepage"] = "4"
+            if chr(input) == "5": config["pages"]["activepage"] = "5"
+            if chr(input) == "6": config["pages"]["activepage"] = "6"
+            if chr(input) == "7": config["pages"]["activepage"] = "7"
+            if chr(input) == "8": config["pages"]["activepage"] = "8"
+            if chr(input) == "s" or chr(input) == "S": config["pages"]["activepage"] = "S"
             # ! douh !
             pageManager()
             inputManager(input) # alle anderen Tasten werden hier pro Page behandelt

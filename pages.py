@@ -17,6 +17,7 @@ from config import updateConfig
 
 
 
+
 class PageBasepage:
     def __init__(self, config, gamedata):
         self.screen = curses.newwin(22, 110, 7, 20)
@@ -27,9 +28,11 @@ class PageBasepage:
         curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
         curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
     def handleInput(self, key):
-        self.gamedata["logger"].warn("keine Überschreibung der Tasten für die aktuelle Page")
+        #self.gamedata["logger"].warn("keine Überschreibung der Tasten für die aktuelle Page")
+        pass
     def update(self):
-        self.gamedata["logger"].warn("keine Überschreibung der aktuellen Page für Ausgabe")
+        #self.gamedata["logger"].warn("keine Überschreibung der aktuellen Page für Ausgabe")
+        pass
     def print(self, posy, posx, content):
         color_escape = False
         color_color = 0         #   -_-
@@ -356,7 +359,7 @@ class PageDownloads(PageBasepage):      # U
         self.screen.clear()
         self.screen.refresh()
         self.config["pages"]["activepage"] = "0"
-class PageSettings(PageBasepage):       # S
+class PageSettings_Alt(PageBasepage):   # S
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
 
@@ -562,7 +565,7 @@ class PageRoute(PageBasepage):          # 2
         self.print(5, 5, "es ist im Moment keine Reise geplant")
     def update_route(self):
         route = self.gamedata["route"]
-        fuelstar = "OBAFGKM" # Sterne zum Tanken
+        fuelstar = "KGBMOFA" # Sterne zum Tanken
         oldpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
         position = 0
         jumps = 0
@@ -1246,5 +1249,175 @@ class PageMissions_alt(PageBasepage):       # 3
 
 
 
+class PageSettings(PageBasepage):
+    def __init__(self, config, gamedata):
+        super().__init__(config, gamedata)
+        self.index = 0
+        self.pages = [ PageSettingsMain(config, gamedata, self), PageSettingsServices(config, gamedata, self) ]
+        self.subpage = self.pages[0]
+        self.selectedLine = 0
+        self.arrowLeft = u"\u25C0"
+        self.arrowRight = u"\u25B6"
+    def handleInput(self, key):
+        lastIndex = self.index
+        # - self.gamedata["logger"].warn("key -> " + str(key))
+        if key == curses.KEY_HOME and self.index > 0:
+            self.index -= 1
+        if key == curses.KEY_END and self.index < (len(self.pages) - 1):
+            self.index += 1
+        if lastIndex != self.index: # neue Seite wurde aufgerufen - Reset
+            self.selectedLine = 0
+            self.subpage = self.pages[self.index]
+        if key == curses.KEY_UP and self.selectedLine > 0:
+            self.selectedLine -= 1
+        if key == curses.KEY_DOWN and self.selectedLine < self.subpage.getOptionCount() - 1:
+            self.selectedLine += 1
+        if key == curses.KEY_LEFT:
+            self.subpage.chooseOptionLeft(self.selectedLine)
+        if key == curses.KEY_RIGHT:
+            self.subpage.chooseOptionRight(self.selectedLine)
+        if key == 0x0a:
+            self.subpage.chooseSpecialFunction(self.selectedLine)
+        self.subpage.handleInput(key)
+        self.update()
+    def update(self):
+        self.screen.clear()
+        self.print(0, 2, self.arrowLeft + " ~yHOME~w/~yEND~w " + self.arrowRight + "  |")
+        self.print(21, 2, "~yCursor-Keys~w zur Auswahl der Option - oder - ~yEnter~w um Sonderfunktionen auszulösen")
+        pos = 17
+        for i in range(0, len(self.pages)):
+            page = self.pages[i]
+            if i == self.index: 
+                self.print(0, pos + 2, "~g" + page.getSubPageName() + "~w")
+            else:
+                self.print(0, pos + 2, page.getSubPageName())
+            pos += len(page.getSubPageName()) + 4 # je zwei Leerzeichen weiter (davor und danach)
+            if i != len(self.pages): self.print(0, pos, "|")
+            pos += 1 # und noch den Pipe dazu
+        self.subpage.update()
+        self.screen.refresh()
+
+class PageSettingsSubpage:
+    def __init__(self, config, gamedata, basepage):
+        self.config = config
+        self.gamedata = gamedata
+        self.basepage = basepage
+        self.arrowLeft = u"\u25C0"  # shortcut
+        self.arrowRight = u"\u25B6"
+        self.line = 0
+    def handleInput(self, key):
+        pass
+    def update(self):
+        pass
+    def getOptionCount(self):
+        return 0
+    def getOptionValueSelected(self, line):
+        pass
+    def getOptionValuePossible(self, line):
+        pass
+    def getOptionValueIndex(self, line):
+        value = self.getOptionValueSelected(line)
+        options = self.getOptionValuePossible(line)
+        for i in range(0, len(options)):
+            if str(value) == str(options[i]):
+                return i
+        return 0
+    def chooseSpecialFunction(self, line):
+        pass
+    def chooseOptionLeft(self, line):
+        index = self.getOptionValueIndex(line) - 1
+        options = self.getOptionValuePossible(line)
+        if index < 0:
+            index = len(options) - 1
+        self.setOptionValueSelected(line, options[index])
+    def chooseOptionRight(self, line):
+        index = self.getOptionValueIndex(line) + 1
+        options = self.getOptionValuePossible(line)
+        if index >= len(options):
+            index = 0
+        self.setOptionValueSelected(line, options[index])
+    def updateOptionLine(self, line, current, comment):
+        # line - aktuelle Zeile zur Ausgabe
+        # selected - aktuell ausgewählt
+        # comment - Information zur option
+        # options - eine Liste mit allen Informationen
+        self.print(line + 5, 7, "~g{0:>10}~w".format(current))
+        self.print(line + 5, 20, comment)
+        if line == self.basepage.selectedLine:
+            self.print(line + 5, 5, "~y" + self.arrowRight + "~w")
+            self.print(line + 5, 18, "~y" + self.arrowLeft + "~w")
+    def print(self, posy, posx, content):
+        self.basepage.print(posy, posx, content)
+
+class PageSettingsMain(PageSettingsSubpage):
+    def __init__(self, config, gamedata, basepage):
+        super().__init__(config, gamedata, basepage)
+    def getSubPageName(self):
+        return "Settings"
+    def handleInput(self, key):
+        pass
+    def getOptionCount(self):
+        return 10
+    def update(self):
+        self.print(2, 5, "Allgemeine Einstellungen")
+        self.updateOptionLine(0, self.getOptionValueSelected(0), "Update der Sternensysteme")
+        self.updateOptionLine(1, self.getOptionValueSelected(1), "max. Entfernung der Systeme für Verkauf (Ly)")
+        self.updateOptionLine(2, self.getOptionValueSelected(2), "max. Entfernung der Stationen für Verkauf (Ls)")
+        self.updateOptionLine(3, self.getOptionValueSelected(3), "Carrier erlauben (bei Update + kein Prüfung auf Landeerlaubnis)")
+        self.updateOptionLine(4, self.getOptionValueSelected(4), "automatisch die Seiten umschalten")
+        self.updateOptionLine(5, self.getOptionValueSelected(5), "Seite nach dem Ende der Route")
+        self.updateOptionLine(6, self.getOptionValueSelected(6), "Farben in der Darstellung nutzen")
+        self.updateOptionLine(7, self.getOptionValueSelected(7), "Autostart von EDMarketConnector")
+        self.updateOptionLine(8, self.getOptionValueSelected(8), "Systeme weiter vom Heimatsystem, werden gelöscht/ignoriert (Ly)")
+        self.updateOptionLine(9, self.getOptionValueSelected(9), "Events anzeigen (Debug-Funktion)")
+    def getOptionValueSelected(self, line):
+        if line == 0: return "update"
+        if line == 1: return self.config["distances"]["systems"]
+        if line == 2: return self.config["distances"]["stations"]
+        if line == 3: return self.config["distances"]["carrier"]
+        if line == 4: return self.config["pages"]["autopage"]
+        if line == 5: return self.config["pages"]["priopage"]
+        if line == 6: return self.config["pages"]["coloring"]
+        if line == 7: return self.config["pages"]["edmc"]
+        if line == 8: return self.config["filter"]["distance"]
+        if line == 9: return self.config["pages"]["events"]
+    def setOptionValueSelected(self, line, option):
+        # Zeile 0 ist uninteressant
+        if line == 1: self.config["distances"]["systems"] = str(option)
+        if line == 2: self.config["distances"]["stations"] = str(option)
+        if line == 3: self.config["distances"]["carrier"] = str(option)
+        if line == 4: self.config["pages"]["autopage"] = str(option)
+        if line == 5: self.config["pages"]["priopage"] = str(option)
+        if line == 6: self.config["pages"]["coloring"] = str(option)
+        if line == 7: self.config["pages"]["edmc"] = str(option)
+        if line == 8: self.config["filter"]["distance"] = str(option)
+        if line == 9: self.config["pages"]["events"] = str(option)
+    def getOptionValuePossible(self, line):
+        distances = [ 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000 ]
+        if line == 0: return "update"
+        if line == 1: return distances
+        if line == 2: return distances
+        if line == 3: return [ "yes", "no" ]
+        if line == 4: return [ "yes", "no" ]
+        if line == 5: return [ "mission", "cargo" ]
+        if line == 6: return [ "yes", "no" ]
+        if line == 7: return [ "yes", "no" ]
+        if line == 8: return distances
+        if line == 9: return [ "yes", "no" ]
+    def chooseSpecialFunction(self, line):
+        self.gamedata["logger"].warn("choose special function")
+        if line == 0: self.config["pages"]["activepage"] = "U"
 
 
+
+
+
+class PageSettingsServices(PageSettingsSubpage):
+    def __init__(self, config, gamedata, basepage):
+        super().__init__(config, gamedata, basepage)
+    def getSubPageName(self):
+        return "Services"
+    def handleInput(self, key):
+        self.gamedata["logger"].warn("handleInput() in services")
+    def update(self):
+        self.print(2, 5, "Liste der Services in der Nähe")
