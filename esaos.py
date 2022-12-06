@@ -682,7 +682,6 @@ def inputManager(key):
     else:
         if key == "c" or key == "C": winmenu.handleKey(key)
         if page == "S": pagesettings.handleInput(key)
-        if page == "T": pagetwitter.handleInput(key)
         if page == "2": pageroute.handleInput(key)
 
 
@@ -716,7 +715,7 @@ def prepareVersion():
         tools.saveConfig(config, gamedata)
 def main(stdsrc):
     global winheader, winmenu, winevents, winstatus
-    global pagesettings, pagetwitter
+    global pagesettings
     global pagecargo, pageroute, pagemissions, pagestoredmodules, pagesaasignals, pagelicense, pageshiphangar, pageshipoutfit, pageasteroid, pagedownloads
 
     if config["pages"]["activepage"] == "U": config["pages"]["activepage"] = "1"
@@ -738,7 +737,6 @@ def main(stdsrc):
     pageshipoutfit = pages.PageShipOutfit(config, gamedata)
     pageasteroid = pages.PageAsteroid(config, gamedata)
     pagedownloads = pages.PageDownloads(config, gamedata)
-    pagetwitter = pages.PageTwitter(config, gamedata)
     pageManager.lastPage = "?"
 
     pageloading.update()
@@ -786,7 +784,6 @@ def main(stdsrc):
             if input == "7": config["pages"]["activepage"] = "7"
             if input == "8": config["pages"]["activepage"] = "8"
             if input == "s" or input == "S": config["pages"]["activepage"] = "S"
-            if input == "t" or input == "T": config["pages"]["activepage"] = "T"
             # ! douh !
             inputManager(input)
     except KeyboardInterrupt:

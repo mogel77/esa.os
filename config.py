@@ -15,6 +15,15 @@ def checkEntry(section, key, value):
         print("Option '" + key + "' mit '" + value + "' angelegt")
         configchanges = True
 
+def removeEntry(section, key):
+    pass
+
+def removeSection(section):
+    global config
+    if section in config:
+        del config[section]
+        print("Section '" + section + "' wurde gelöscht")
+
 def updateConfig():
     global config, configchanges
     # pauschal alles einlesen
@@ -34,15 +43,6 @@ def updateConfig():
     checkEntry('eddir', 'path', 'unset')
     checkEntry('eddir', 'lastlog', 'unsed')
     checkEntry('eddir', 'edmc', '../EDMarketConnector')
-
-    # Twitter-Log
-    checkEntry('twitter', 'api_key', 'unset')
-    checkEntry('twitter', 'api_secret', 'unset')
-    checkEntry('twitter', 'access_token', 'unset')
-    checkEntry('twitter', 'access_secret', 'unset')
-    checkEntry('twitter', 'client_token', 'unset')
-    checkEntry('twitter', 'client_secret', 'unset')
-    checkEntry('twitter', 'bearer_token', 'unset')
 
     # Download URLS
     # checkEntry('urls', 'commodities', 'https://edgalaxydata.space/EDDB/dumps/commodities.json')
@@ -110,6 +110,9 @@ def updateConfig():
     checkEntry('pages', 'services', 'Repair, Mining, Market, Restock, Refuel')  # die Services werden angezeigt
     checkEntry('pages', 'services_known', '')       # Services die über alle Stationen angezeigt werden
     checkEntry('pages', 'coloring', 'yes')          # wenn Farben verwendet werden sollen
+
+    # alten & unnützen Kram löschen
+    removeSection('twitter')
 
     # und dann schreiben
     with open(r"config.ini", 'w') as configfile:

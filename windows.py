@@ -93,7 +93,7 @@ class WinMenu(WinBaseWindow):
         
         line = 12
         line = self.printMenuEntry(line, "Settings", "S")
-        if not self.config["twitter"]["api_key"] == "unset": line = self.printMenuEntry(line, "Twitter", "T")
+        # -- veraltet -- if not self.config["twitter"]["api_key"] == "unset": line = self.printMenuEntry(line, "Twitter", "T")
 
     def update_chatter(self):
         self.vLine(0, 19, 24)

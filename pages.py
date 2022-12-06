@@ -8,7 +8,6 @@ import json
 import time
 import random
 import sys
-import tweepy
 from os.path import exists
 from datetime import datetime
 
