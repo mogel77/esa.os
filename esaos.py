@@ -634,55 +634,54 @@ def getPrioPage():
     if config["pages"]["priopage"] == "cargo": return prioCargo()
     return prioMission()
 def autoPage(page):
-    pageManager.lastPage = "?"
+    # page - die aufzurufende Page (wenn Auto aktiviert ist)
+    pageManager.lastNumber = "?"
     if config["pages"]["autopage"] == "yes": config["pages"]["activepage"] = str(page)
     pageManager()
 def pageManager():
     if config["pages"]["events"] == "yes":
         pageManager_raw()       # debug-meldungen und Fehler des Programms
     else:
-        pageManager_catch()     # alles schön verstecken - hoffentlich
+        pageManager_catch()     # alles schön verstecken
 def pageManager_catch():
     try:
         pageManager_raw()
     except Exception as ex:
-        # gamedata["logger"].error("{0}".format(ex))
         gamedata["logger"].exception(ex)
         if "event" in gamedata: gamedata["logger"].error("!!! " + json.dumps(gamedata["event"])) # das wurde "gesendet"
 def pageManager_raw():
     global config
-    global pagesettings, pagetwitter
+    global pagesettings
     global pagecargo, pageroute, pagemissions, pagestoredmodules, pagesaasignals, pagelicense, pageshiphangar, pageshipoutfit, pageasteroid, pagedownloads
-    page = config["pages"]["activepage"]
+    pageNumber = config["pages"]["activepage"]
     if config["user"]["license"] == "yes":
-        if page == pageManager.lastPage: return
+        if pageNumber == pageManager.lastNumber : return
         # ! douh !
-        if page == "1": pagecargo.update()
-        if page == "2": pageroute.update()
-        if page == "3": pagemissions.update()
-        if page == "4": pagestoredmodules.update()
-        if page == "5": pageshiphangar.update()
-        if page == "6": pageshipoutfit.update()
-        if page == "7": pagesaasignals.update()
-        if page == "8": pageasteroid.update()
-        if page == "S": pagesettings.update()
-        if page == "U": pagedownloads.update()
-        if page == "T": 
-            if not config["twitter"]["api_key"] == "unset":  pagetwitter.update()
-        pageManager.lastPage = page
+        if pageNumber == "1": pageManager.currentPage = pagecargo
+        if pageNumber == "2": pageManager.currentPage = pageroute
+        if pageNumber == "3": pageManager.currentPage = pagemissions
+        if pageNumber == "4": pageManager.currentPage = pagestoredmodules
+        if pageNumber == "5": pageManager.currentPage = pageshiphangar
+        if pageNumber == "6": pageManager.currentPage = pageshipoutfit
+        if pageNumber == "7": pageManager.currentPage = pagesaasignals
+        if pageNumber == "8": pageManager.currentPage = pageasteroid
+        if pageNumber == "S": pageManager.currentPage = pagesettings
+        if pageNumber == "U": pageManager.currentPage = pagedownloads
+        pageManager.lastNumber  = pageNumber
+        pageManager.currentPage.update()
     else:
         pagelicense.update()
 
 def inputManager(key):
+    # key - die gedrückte taste
     global config
     global pagesettings, pagelicense
     page = config["pages"]["activepage"]
     if config["user"]["license"] == "no":
         pagelicense.handleInput(key)
     else:
-        if key == "c" or key == "C": winmenu.handleKey(key)
-        if page == "S": pagesettings.handleInput(key)
-        if page == "2": pageroute.handleInput(key)
+        if key == "c" or key == "C": winmenu.handleKey(key) # einzige Taste ohne Page
+        pageManager.currentPage.handleInput(key)
 
 
 
@@ -737,7 +736,7 @@ def main(stdsrc):
     pageshipoutfit = pages.PageShipOutfit(config, gamedata)
     pageasteroid = pages.PageAsteroid(config, gamedata)
     pagedownloads = pages.PageDownloads(config, gamedata)
-    pageManager.lastPage = "?"
+    pageManager.lastNumber  = "?"
 
     pageloading.update()
     if os.path.exists(config["localnames"]["stations"]):
@@ -759,6 +758,7 @@ def main(stdsrc):
     winheader.update()
     winevents.update()
     winstatus.update()
+    pageManager()
 
     observer = None
     path = config["eddir"]["path"]
@@ -769,7 +769,6 @@ def main(stdsrc):
         observer.start()
     try:
         while True:
-            pageManager()
             winevents.update()
             winheader.update()
             winmenu.update()
@@ -785,7 +784,8 @@ def main(stdsrc):
             if input == "8": config["pages"]["activepage"] = "8"
             if input == "s" or input == "S": config["pages"]["activepage"] = "S"
             # ! douh !
-            inputManager(input)
+            pageManager()
+            inputManager(input) # alle anderen Tasten werden hier pro Page behandelt
     except KeyboardInterrupt:
         if not observer is None: observer.stop()
     if not observer is None: observer.join()

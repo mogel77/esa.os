@@ -26,6 +26,10 @@ class PageBasepage:
         curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
         curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
         curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+    def handleInput(self, key):
+        self.gamedata["logger"].warn("keine Überschreibung der Tasten für die aktuelle Page")
+    def update(self):
+        self.gamedata["logger"].warn("keine Überschreibung der aktuellen Page für Ausgabe")
     def print(self, posy, posx, content):
         color_escape = False
         color_color = 0         #   -_-
@@ -424,24 +428,6 @@ class PageSettings(PageBasepage):       # S
                 self.config["user"]["homey"] = "72.46875"
                 self.config["user"]["homez"] = "-20.65625"
         self.update()
-class PageTwitter(PageBasepage):        # T - im Moment unnütze - Twitter mag mich nicht
-    def __init__(self, config, gamedata):
-        super().__init__(config, gamedata)
-        auth = tweepy.OAuth2BearerHandler(self.config["twitter"]["bearer_token"])
-        self.twitter = tweepy.API(auth)
-        try:
-            self.twitter.verify_credentials()
-            self.gamedata["logger"].info('Twitter: Successful Authentication')
-        except:
-            self.gamedata["logger"].info('Twitter: Failed authentication')
-
-    def handleInput(self, key):
-        pass
-
-    def update(self):
-        self.screen.clear()
-        self.print(5, 10, "- Twitter Optionen -")
-        self.screen.refresh()
 
 
 
@@ -652,7 +638,6 @@ class PageRoute(PageBasepage):          # 2
         if key == "r" or key == "R":
             self.config["user"]["travel"] = "0"
             self.update()
-
 class PageMissions(PageBasepage):       # 3
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
