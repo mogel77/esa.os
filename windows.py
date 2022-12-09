@@ -113,7 +113,7 @@ class WinMenu(WinBaseWindow):
         return str(options[index])
 
     def handleKey(self, key):
-        if not (key == "c" or key == "C"): return # sec-check
+        if not (chr(key) == "c" or chr(key) == "C"): return # sec-check
         options = [ "auto" ]
         for channel in self.gamedata["events"]:
             if not isinstance(self.gamedata["events"][channel], str): options.append(channel)

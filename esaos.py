@@ -30,32 +30,33 @@ config.read('config.ini')
 
 # zusätzliche Dinge zur Laufzeit
 gamedata = {}
-gamedata["stations"] = []
-gamedata["modnames"] = []
-gamedata["cargo"] = []
-gamedata["materials"] = {}
+gamedata["stations"] = []                   # alle bekannten Stationen
+gamedata["modnames"] = []                   # alle Module
+gamedata["cargo"] = []                      # Frachtraum
+gamedata["materials"] = {}                  # Materialien
 gamedata["materials"]["raw"] = []
 gamedata["materials"]["manufactured"] = []
 gamedata["materials"]["encoded"] = []
-gamedata["locker"] = {}
+gamedata["locker"] = {}                     # Schmuggel
 gamedata["locker"]["items"] = []
 gamedata["locker"]["components"] = []
 gamedata["locker"]["consumables"] = []
 gamedata["locker"]["data"] = []
-gamedata["missions"] = []
-gamedata["route"] = []
-gamedata["stored"] = {}
+gamedata["missions"] = []                   # angenomene Missionen
+gamedata["route"] = []                      # aktuelle Sprungroute
+gamedata["stored"] = {}                     # gelagerte Dinge
 gamedata["stored"]["modules"] = []
 gamedata["stored"]["ships"] = []
 gamedata["stored"]["outfit"] = []
-gamedata["saasignals"] = []
-gamedata["asteroid"] = []
-gamedata["events"] = {}
+gamedata["saasignals"] = []                 # Scan-Daten
+gamedata["asteroid"] = []                   # - ?? - und schon haben wir einen Punkt der mir nicht bekannt vorkommt
+gamedata["events"] = {}                     # aktuelles
 gamedata["events"]["channel"] = config["user"]["channel"]       # vom Benutzer bevorzugt
 gamedata["events"]["lastch"] = "npc"                            # letzte vom System angekommene - NPC existiert auf jedenfall
 gamedata["events"]["npc"] = [ "", "", "", "", "" ]              # ... daher vorbereiten
 gamedata["events"]["debug"] = [ "", "", "", "", "" ]            # pauschal - ist ja auch immer da
-gamedata["status"] = [ "", "", "", "", "" ]
+gamedata["status"] = [ "", "", "", "", "" ] # Status-Fenster - rechts unten
+gamedata["system"] = {}                     # Informationen zum aktuellem System - aus den einzelnen Events gestückelt
 
 
 
@@ -120,6 +121,7 @@ class MyFileHandler(FileSystemEventHandler):
             if entry["event"] == "NavRouteClear": Event_NavRouteClear(entry)
             if entry["event"] == "FSDTarget": Event_FSDTarget(entry)
             if entry["event"] == "FSDJump": Event_FSDJump(entry)
+            if entry["event"] == "StartJump": Event_StartJump(entry)
             if entry["event"] == "JetConeBoost": Event_JetConeBoost(entry)
             if entry["event"] == "SupercruiseExit": Event_SupercruiseExit(entry)
             if entry["event"] == "SupercruiseEntry": Event_SupercruiseEntry(entry)
@@ -201,27 +203,39 @@ def Event_NavRouteClear(entry):
     gamedata["route"] = [] # löschen -damit FSDJump nicht wieder die leere Route aufruft
     autoPage(getPrioPage())
 def Event_FSDTarget(entry): # das ist das nächste Ziel zum Sprung
+    global gamedata
     # { "timestamp":"2022-10-08T12:59:46Z", "event":"FSDTarget", "Name":"Sharru Sector YO-A b0", "SystemAddress":671760000393, "StarClass":"M", "RemainingJumpsInRoute":8 }
+    gamedata["system"]["starclass"] = entry["StarClass"]
     pass
+def Event_StartJump(entry):
+    autoPage(2) #   pauschal die Route aufrufen
 def Event_FSDJump(entry):
+    global winheader, winstatus, gamedata
     def lineSystem(entry):
         starname = entry["StarSystem"]
         goverment = getDictItem(entry, "SystemGovernment", "SystemGovernment_Localised")
+        if goverment == "n/v":
+            # goverment = "Sternenklasse  " + gamedata["system"]["starclass"]
+            goverment = "" # hier nichts weiter anzeigen
+        else:
+            goverment = " - " + goverment
         if "Powers" in entry:
             playname = entry["Powers"][0]
             playstate = getDictItem(entry, "PowerplayState", "PowerplayState_Localised")
             output = "{0} - {1} ({2})".format(starname, playname, playstate)
         else:
-            output = "{0} - {1}".format(starname, goverment)
+            output = "{0} {1}".format(starname, goverment)
         return output
     def lineEconomy(entry):
         security = getDictItem(entry, "SystemSecurity", "SystemSecurity_Localised")
         economy1 = getDictItem(entry, "SystemEconomy", "SystemEconomy_Localised")
         economy2 = getDictItem(entry, "SystemSecondEconomy", "SystemSecondEconomy_Localised")
-        output = "{0} | {1} - {2}".format(economy1, economy2, security)
-        return output
+        if economy1 != "n/v":
+            return "{0} | {1} - {2}".format(economy1, economy2, security)
+        return "Sternenklasse: " + gamedata["system"]["starclass"]
     def lineFaction(entry):
-        if not "SystemFaction" in entry: return ""
+        if not "SystemFaction" in entry:
+            return "Position: {0:.1f} / {1:.1f} / {2:.1f} ".format(entry["StarPos"][0], entry["StarPos"][1], entry["StarPos"][2])
         sysfaction = getDictItem(entry["SystemFaction"], "Name")
         sysstate = getDictItem(entry["SystemFaction"], "FactionState")
         if sysfaction is None: return ""
@@ -229,7 +243,6 @@ def Event_FSDJump(entry):
             return sysfaction
         else:
             return "{0} ({1})".format(sysfaction, sysstate)
-    global winheader, winstatus
     if "JumpDist" in entry:
         travel = int(config["user"]["travel"])
         travel += int(entry["JumpDist"])
@@ -680,7 +693,7 @@ def inputManager(key):
     if config["user"]["license"] == "no":
         pagelicense.handleInput(key)
     else:
-        if key == "c" or key == "C": winmenu.handleKey(key) # einzige Taste ohne Page
+        if chr(key) == "c" or chr(key) == "C": winmenu.handleKey(key) # einzige Taste ohne Page
         pageManager.currentPage.handleInput(key)
 
 
