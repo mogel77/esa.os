@@ -57,7 +57,10 @@ gamedata["events"]["npc"] = [ "", "", "", "", "" ]              # ... daher vorb
 gamedata["events"]["debug"] = [ "", "", "", "", "" ]            # pauschal - ist ja auch immer da
 gamedata["status"] = [ "", "", "", "", "" ] # Status-Fenster - rechts unten
 gamedata["system"] = {}                     # Informationen zum aktuellem System - aus den einzelnen Events gestückelt
-
+gamedata["system"]["name"] = config["user"]["system"]  # Namen übernehmen
+gamedata["fss"] = {}                        # Scanndaten
+gamedata["fss"]["planets"] = []
+gamedata["fss"]["completed"] = False
 
 
 if os.path.exists("esaos.log"): os.remove("esaos.log")
@@ -175,6 +178,8 @@ class MyFileHandler(FileSystemEventHandler):
             if entry["event"] == "RestockVehicle": Event_RestockVehicle(entry)
             if entry["event"] == "PowerplayFastTrack": Event_PowerplayFastTrack(entry)
             if entry["event"] == "NpcCrewPaidWage": Event_NpcCrewPaidWage(entry)
+            if entry["event"] == "Scan": Event_Scan(entry)
+            if entry["event"] == "FSSAllBodiesFound": Event_FSSAllBodiesFound(entry)
             winmenu.update()
 
 
@@ -202,10 +207,10 @@ def Event_NavRouteClear(entry):
     # { "timestamp":"2022-10-08T12:59:46Z", "event":"NavRoute" }
     gamedata["route"] = [] # löschen -damit FSDJump nicht wieder die leere Route aufruft
     autoPage(getPrioPage())
-def Event_FSDTarget(entry): # das ist das nächste Ziel zum Sprung
+def Event_FSDTarget(entry): # das ist das aktuelle System !?
     global gamedata
     # { "timestamp":"2022-10-08T12:59:46Z", "event":"FSDTarget", "Name":"Sharru Sector YO-A b0", "SystemAddress":671760000393, "StarClass":"M", "RemainingJumpsInRoute":8 }
-    gamedata["system"]["starclass"] = entry["StarClass"]
+    gamedata["system"]["starclass"] = entry["StarClass"] # falscher Stern - versteckt aber einen Bug
     pass
 def Event_StartJump(entry):
     autoPage(2) #   pauschal die Route aufrufen
@@ -215,7 +220,6 @@ def Event_FSDJump(entry):
         starname = entry["StarSystem"]
         goverment = getDictItem(entry, "SystemGovernment", "SystemGovernment_Localised")
         if goverment == "n/v":
-            # goverment = "Sternenklasse  " + gamedata["system"]["starclass"]
             goverment = "" # hier nichts weiter anzeigen
         else:
             goverment = " - " + goverment
@@ -259,6 +263,14 @@ def Event_FSDJump(entry):
     gamedata["status"][2] = lineEconomy(entry)
     gamedata["status"][3] = lineFaction(entry)
     gamedata["status"][4] = ""
+    gamedata["fss"] = {}        # letzten Scan löschen
+    gamedata["fss"]["planets"] = []
+    gamedata["fss"]["completed"] = False
+    if "StarClass" in entry:
+        gamedata["system"]["starclass"] = entry["StarClass"]
+    else:
+        gamedata["system"]["starclass"] = "Primär"
+    gamedata["system"]["name"] = config["user"]["system"]
     winheader.update()
     winstatus.update()
     if len(gamedata["route"]) > 0:
@@ -581,6 +593,41 @@ def Event_PowerplayFastTrack(entry):
 def Event_NpcCrewPaidWage(entry):
     handleCreditsSub("Amount", entry)
 
+def Event_Scan(entry):
+    global gamedata
+    planet = {}
+    planet["name"] = entry["BodyName"]
+    if "PlanetClass" in entry:
+        planet["type"] = entry["PlanetClass"]
+    else:
+        if "StarType" in entry:
+            planet["type"] = entry["StarType"] + " Star"
+        else:
+            planet["type"] = "Belt Cluster"
+    if "SurfaceGravity" in entry:
+        planet["gravity"] = entry["SurfaceGravity"]
+    else:
+        planet["gravity"] = 0.0
+    if "SurfaceTemperature" in entry:
+        planet["temp"] = entry["SurfaceTemperature"]
+    else:
+        planet["temp"] = 0
+    if "Composition" in entry:
+        planet["materials"] = entry["Composition"]      # dict
+    else:
+        planet["materials"] = { }
+    if "Landable" in entry:
+        planet["landable"] = entry["Landable"]
+    else:
+        planet["landable"] = False
+    gamedata["fss"]["planets"].append(planet)
+    autoPage(9)
+def Event_FSSAllBodiesFound(entry):
+    global gamedata
+    gamedata["fss"]["completed"] = True
+    autoPage(9)
+
+
 
 # { "timestamp":"2022-10-16T19:06:26Z", "event":"MissionAbandoned", "Name":"Mission_Collect_name", "MissionID":895117670 }
 
@@ -665,7 +712,7 @@ def pageManager_catch():
 def pageManager_raw():
     global config
     global pagesettings
-    global pagecargo, pageroute, pagemissions, pagestoredmodules, pagesaasignals, pagelicense, pageshiphangar, pageshipoutfit, pageasteroid, pagedownloads
+    global pagecargo, pageroute, pagemissions, pagestoredmodules, pagesaasignals, pagelicense, pageshiphangar, pageshipoutfit, pageasteroid, pagedownloads, pagefss
     pageNumber = config["pages"]["activepage"]
     if config["user"]["license"] == "yes":
         if pageNumber == pageManager.lastNumber : return
@@ -678,6 +725,7 @@ def pageManager_raw():
         if pageNumber == "6": pageManager.currentPage = pageshipoutfit
         if pageNumber == "7": pageManager.currentPage = pagesaasignals
         if pageNumber == "8": pageManager.currentPage = pageasteroid
+        if pageNumber == "9": pageManager.currentPage = pagefss
         if pageNumber == "S": pageManager.currentPage = pagesettings
         if pageNumber == "U": pageManager.currentPage = pagedownloads
         pageManager.lastNumber  = pageNumber
@@ -727,8 +775,8 @@ def prepareVersion():
         tools.saveConfig(config, gamedata)
 def main(stdsrc):
     global winheader, winmenu, winevents, winstatus
-    global pagesettings
-    global pagecargo, pageroute, pagemissions, pagestoredmodules, pagesaasignals, pagelicense, pageshiphangar, pageshipoutfit, pageasteroid, pagedownloads
+    global pagesettings, pagedownloads, pagelicense
+    global pagecargo, pageroute, pagemissions, pagestoredmodules, pagesaasignals, pageshiphangar, pageshipoutfit, pageasteroid, pagefss
 
     if config["pages"]["activepage"] == "U": config["pages"]["activepage"] = "1"
     prepareVersion()
@@ -749,6 +797,7 @@ def main(stdsrc):
     pageshipoutfit = pages.PageShipOutfit(config, gamedata)
     pageasteroid = pages.PageAsteroid(config, gamedata)
     pagedownloads = pages.PageDownloads(config, gamedata)
+    pagefss = pages.PageFSS(config, gamedata)
     pageManager.lastNumber  = "?"
     pageManager.currentPage = pagecargo # pauschal
 
@@ -796,6 +845,7 @@ def main(stdsrc):
             if chr(input) == "6": config["pages"]["activepage"] = "6"
             if chr(input) == "7": config["pages"]["activepage"] = "7"
             if chr(input) == "8": config["pages"]["activepage"] = "8"
+            if chr(input) == "9": config["pages"]["activepage"] = "9"
             if chr(input) == "s" or chr(input) == "S": config["pages"]["activepage"] = "S"
             # ! douh !
             pageManager()

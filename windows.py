@@ -87,11 +87,11 @@ class WinMenu(WinBaseWindow):
 
     def update_menu(self):
         if not self.config["user"]["license"] == "yes": return
-        modules = [ "Cargo", "Route", "Mission", "Module", "Hangar", "Ausstattung", "SAA Scan", "Asteroid Scan" ]
+        modules = [ "Cargo", "Route", "Mission", "Module", "Hangar", "Ausstattung", "SAA Scan", "Asteroid Scan", "VSS" ]
         for i in range(0, len(modules)):
             self.printMenuEntry(i + 3, modules[i][-14:], (i + 1))
         
-        line = 12
+        line = 13
         line = self.printMenuEntry(line, "Settings", "S")
         # -- veraltet -- if not self.config["twitter"]["api_key"] == "unset": line = self.printMenuEntry(line, "Twitter", "T")
 

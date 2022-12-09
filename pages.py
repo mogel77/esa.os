@@ -360,78 +360,6 @@ class PageDownloads(PageBasepage):      # U
         self.screen.clear()
         self.screen.refresh()
         self.config["pages"]["activepage"] = "0"
-class PageSettings_Alt(PageBasepage):   # S
-    def __init__(self, config, gamedata):
-        super().__init__(config, gamedata)
-
-    def formatSetting(self, key, option, text):
-        return "(~y{0}~w) {1:>7} {2}".format(key, option, text)
-
-    def scrollSetting(self, current, options):
-        index = 0
-        # aktuelle option suchen bzw. den Index dazu
-        for o in options:
-            if str(o) == current: break
-            index += 1
-        index += 1 # aktuellen Index erhöhen - wollen ja nächste Option
-        if index >= len(options): index = 0
-        return str(options[index])
-
-    def update(self):
-        if len(self.gamedata["stations"]) == 0:
-            avail = "keine Stationen vorhanden"
-        else:
-            avail = str(len(self.gamedata["stations"])) + " Stationen"
-        self.screen.clear()
-        self.print(2, 5, self.formatSetting("U", "", "Update der Sternensysteme starten - {0}".format(avail)))
-        self.print(4, 5, self.formatSetting("H", self.config["user"]["homesys"], "Heimatsystem"))
-        self.print(5, 5, self.formatSetting("J", self.config["distances"]["systems"], "max. Entfernung der Systeme für Verkauf (Ly)"))
-        self.print(6, 5, self.formatSetting("L", self.config["distances"]["stations"], "max. Entfernung der Stationen für Verkauf (Ls)"))
-        self.print(7, 5, self.formatSetting("K", self.config["distances"]["carrier"], "Carrier erlauben (bei Update + kein Prüfung auf Landeerlaubnis)"))
-        self.print(8, 5, self.formatSetting("A", self.config["pages"]["autopage"], "automatisch die Seiten umschalten"))
-        self.print(9, 5, self.formatSetting("P", self.config["pages"]["priopage"], "Seite nach dem Ende der Route"))
-        self.print(10, 5, self.formatSetting("G", self.config["pages"]["coloring"], "Farben in der Darstellung nutzen"))
-        self.print(14, 5, self.formatSetting("M", self.config["pages"]["edmc"], "Autostart von EDMarketConnector (experimentell)"))
-        self.print(15, 5, self.formatSetting("F", self.config["filter"]["distance"], "Systeme weiter vom Heimatsystem, werden gelöscht/ignoriert (Ly)"))
-        self.print(16, 5, self.formatSetting("E", self.config["pages"]["events"], "Events anzeigen (Debug-Funktion)"))
-        self.screen.refresh()
-
-    def handleInput(self, key):
-        distances = [ 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000 ]
-        if key == "u" or key == "U": self.config["pages"]["activepage"] = "U"
-        if key == "j" or key == "J": self.config["distances"]["systems"] = self.scrollSetting(self.config["distances"]["systems"], distances)
-        if key == "l" or key == "L": self.config["distances"]["stations"] = self.scrollSetting(self.config["distances"]["stations"], distances)
-        if key == "k" or key == "K": self.config["distances"]["carrier"] = self.scrollSetting(self.config["distances"]["carrier"], [ "yes", "no" ])
-        if key == "a" or key == "A": self.config["pages"]["autopage"] = self.scrollSetting(self.config["pages"]["autopage"], [ "yes", "no" ])
-        if key == "p" or key == "P": self.config["pages"]["priopage"] = self.scrollSetting(self.config["pages"]["priopage"], [ "mission", "cargo" ])
-        if key == "g" or key == "G": self.config["pages"]["coloring"] = self.scrollSetting(self.config["pages"]["coloring"], [ "yes", "no" ])
-        if key == "m" or key == "M": self.config["pages"]["edmc"] = self.scrollSetting(self.config["pages"]["edmc"], [ "yes", "no" ])
-        if key == "f" or key == "F": self.config["filter"]["distance"] = self.scrollSetting(self.config["filter"]["distance"], distances)
-        if key == "e" or key == "E": self.config["pages"]["events"] = self.scrollSetting(self.config["pages"]["events"], [ "yes", "no" ])
-        if key == "h" or key == "H":
-            home = self.scrollSetting(self.config["user"]["homesys"], [ "Sol", "Achenar", "Alioth", self.config["user"]["system"] ])
-            # Pauschal das aktuelle System setzen
-            self.config["user"]["homesys"] = self.config["user"]["system"]
-            self.config["user"]["homex"] = self.config["user"]["locx"]
-            self.config["user"]["homey"] = self.config["user"]["locy"]
-            self.config["user"]["homez"] = self.config["user"]["locz"]
-            # jetzt die "richtigen" Werte
-            if home == "Sol":
-                self.config["user"]["homesys"] = "Sol"
-                self.config["user"]["homex"] = "0.0"
-                self.config["user"]["homey"] = "0.0"
-                self.config["user"]["homez"] = "0.0"
-            if home == "Achenar":
-                self.config["user"]["homesys"] = "Achenar"
-                self.config["user"]["homex"] = "67.5"
-                self.config["user"]["homey"] = "-119.46875"
-                self.config["user"]["homez"] = "24.84375"
-            if home == "Alioth":
-                self.config["user"]["homesys"] = "Alioth"
-                self.config["user"]["homex"] = "-33.65625"
-                self.config["user"]["homey"] = "72.46875"
-                self.config["user"]["homez"] = "-20.65625"
-        self.update()
 
 
 
@@ -1064,188 +992,69 @@ class PageAsteroid(PageBasepage):       # 8
             self.print(8 + line, 5, output)
             line += 1
             self.screen.refresh() # nach jeder Zeile - das suchen der preise dauert immer etwas
-
-
-
-
-
-class PageCargo_alt(PageBasepage):          # 1
+class PageFSS(PageBasepage):
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
-        self.loadCargo()
-
-    def loadCargo(self):
-        if not exists(self.config["eddir"]["path"] + "/Cargo.json"): return
-        with open(self.config["eddir"]["path"] + "/Cargo.json", "r") as f:
-            self.gamedata["cargo"] = json.load(f)["Inventory"]
-
-    def getMission(self, id):
-        for m in self.gamedata["missions"]:
-            if m["MissionID"] == id: return m
-        return None
-
-    def update(self):
-        self.cargouse = 0
-        self.marge_total = 0
-        if len(self.gamedata["stored"]["outfit"]) > 0:
-            self.cargomax = self.gamedata["stored"]["outfit"]["CargoCapacity"]
-        else:
-            self.cargomax = 999 # maximaler Speicherraum - da das Outfit noch nicht geladen wurde
-        self.limpetcount = 0
-        self.screen.clear()
-        if self.hasCargo(): # mehr als genug Fracht
-            self.update_cargo()
-        else:
-            # entweder 1x Fracht oder nur Drohnen
-            self.limpetcount = self.countDrones()
-            if self.limpetcount == 0:
-                # es ist Fracht
-                self.update_cargo()
-            else: # es sind nur Drohnen
-                self.cargouse = self.limpetcount
-        self.showCapacity()
-        self.screen.refresh()
-    def update_clear(self):
-        self.print(5, 10, "der Frachtraum ist zur Zeit leer")
-    def update_cargo(self):
-        cargo = self.gamedata["cargo"]
-        self.print(10, 20, "... berechne Daten für aktuellen Cargo ...")
-        self.screen.refresh()
-        self.screen.clear()
-        playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
-        stations = self.gamedata["stations"]
-        itemnumber = 0
-        for item in cargo:
-            maxmarket = None
-            maxdistance = 0.0
-            price = 0
-            if not "MissionID" in item:
-                for station in stations:
-                    systempos = [ float(station["coords"][0]), float(station["coords"][1]), float(station["coords"][2]) ]
-                    distance = math.dist(playerpos, systempos)
-                    if distance > float(self.config["distances"]["systems"]): continue
-                    if station["ls"] > float(self.config["distances"]["stations"]): continue
-                    for commodities in station["commodities"]:
-                        if commodities["demand"] <= 0: continue;
-                        if commodities["symbol"] != item["Name"]: continue
-                        if commodities["sellPrice"] < 1.0: continue
-                        if maxmarket is None:
-                            maxmarket = station
-                        else:
-                            neu = self.getPrice(station, item["Name"])
-                            if neu > price:
-                                maxdistance = distance
-                                maxmarket = station
-                                price = neu
-            # maxmarket hat jetzt den besten Preis für das Item
-            cargo_item = item["Name"]
-            if "Name_Localised" in item: cargo_item = item["Name_Localised"]
-            cargo_count = item['Count']
-            self.cargouse += cargo_count
-            cargo_price = "{:,}".format(price)
-            fullmarge = price * cargo_count
-            cargo_marge = "{:,}".format(price * cargo_count)
-            line1 = "{0:>14}\u00A2   {1:3}  {2:30}".format(cargo_marge, cargo_count, cargo_item)
-            line2 = ""
-            if not maxmarket is None:
-                missionitem = False
-                for mission in self.gamedata["missions"]:
-                    if "Commodity_Localised" in mission:
-                        if mission["Commodity_Localised"] == cargo_item: missionitem = True
-                if missionitem:
-                    line2 = "{0:14}    {1:3}  >> mögliche Fracht für eine Liefer-Mission".format(" ", " ") # , maxdistance, cargo_system, cargo_market)
-                else:
-                    cargo_system = maxmarket["system"]
-                    cargo_distance = "{:6.1f}".format(maxdistance) + "ly"
-                    cargo_market = maxmarket["name"]
-                    line2 = "{0:14}    {1:3}  {2:4.1f}ly {3} ({4})".format(" ", " ", maxdistance, cargo_system, cargo_market)
-                self.marge_total += fullmarge
-            else:
-                if not "MissionID" in item:
-                    missionitem = False
-                    for mission in self.gamedata["missions"]:
-                        if "Commodity_Localised" in mission:
-                            if mission["Commodity_Localised"].lower() == cargo_item.lower(): missionitem = True
-                    if missionitem:
-                        line2 = "{0:14}    {1:3}  >> mögliche Fracht für eine Liefer-Mission".format(" ", " ") # , maxdistance, cargo_system, cargo_market)
-                    else:
-                        line2 = "{0:14}    {1:3}  innerhalb von {2:4.1f}ly nicht verkaufbar".format(" ", " ", float(self.config["distances"]["systems"]))
-                    self.marge_total += fullmarge
-                else:
-                    mission = self.getMission(item["MissionID"])
-                    if mission is None:
-                        line2 = "{0:14}    {1:3}  >> Fracht für eine unbekannte Mission".format(" ", " ")
-                    else:
-                        line2 = "{0:14}    {1:3}  >> {2}".format(" ", " ", mission["LocalisedName"])
-            if item["Name"] == "drones":
-                self.limpetcount = cargo_count
-                continue # Drohnen müssen ausgeblendet werden
-            self.print(itemnumber * 2 + 0, 5, line1)
-            self.print(itemnumber * 2 + 1, 5, line2)
-            itemnumber += 1
-            self.screen.refresh()
-    def showCapacity(self):
-        percent = (self.cargouse / self.cargomax) * 100.0
-        filler = ""
-        for i in range(0, 100): filler += " "     # vorfüllen
-        temp = list(filler)
-        for i in range(0, int(percent)): temp[i] = "="     # auffüllen
-        filler = "".join(temp)
-        #output = "{0:>3} Drohnen [{1}] {2:>3}/{3:>3}".format(self.limpetcount, filler, self.cargouse, self.cargomax)
-        self.print(21, 2, "[{0}]".format(filler))
-        self.print(20, 2, "{0} Drohnen".format(self.limpetcount))
-        self.print(20, 95, "{0:>3} / {1:>3}".format(self.cargomax - self.cargouse, self.cargomax))
-        self.print(20, 35, "{0:^20}".format("{0:,}\u00A2 ".format(self.marge_total)))
-class PageMissions_alt(PageBasepage):       # 3
-    def __init__(self, config, gamedata):
-        super().__init__(config, gamedata)
-        self.loadMissions()
-
-    def loadMissions(self):
-        if exists(self.config["localnames"]["missions"]):
-            with open(self.config["localnames"]["missions"], "r") as file:
-                for line in file.readlines():
-                    mission = json.loads(line)
-                    self.gamedata["missions"].append(mission)
-
+        self.starting = 0
     def update(self):
         self.screen.clear()
-        if len(self.gamedata["missions"]) > 0:
-            self.update_missions()
-        else:
-            self.update_clear()
+        additional = ""
+        if self.gamedata["fss"]["completed"] == True:
+            additional = " - vollständig"
+        self.print(0, 2, "Voll Spektrum Scanner für ~g{0}~w{1}".format(self.gamedata["system"]["name"], additional))
+        self.showPlanets()
+        if len(self.gamedata["fss"]["planets"]) >= 17:
+            self.print(21, 2, "~yCursor Up/Down~w um durch die Planeten zu scrollen~w")
         self.screen.refresh()
-
-    def update_clear(self):
-        self.print(5, 10, "keine Aufträge vorhanden")
-
-    def update_missions(self):
-        line = 0
-        for m in self.gamedata["missions"]:
-            # "Expiry": "2022-10-10T16:33:06Z"
-            expired = "zeitlos"
-            if "Expiry" in m:
-                now = datetime.utcnow()
-                exp = datetime.fromisoformat(m["Expiry"].replace("T", " ").replace("Z", ""))
-                s = (exp - now).seconds
-                hours = s // 3600
-                s = s - (hours * 3600)
-                minutes = s // 60
-                seconds = s - (minutes * 60)
-                expired = "{:02}h{:02}m".format(int(hours), int(minutes))
-                if "DestinationSystem" in m:
-                    if "DestinationStation" in m:
-                        self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", m["DestinationSystem"], m["DestinationStation"]))
-                    else:
-                        self.print(line * 2 + 1, 2, "{0:>10}   {1} ({2})".format(" ", m["DestinationSystem"], m["DestinationSettlement"]))
-                    if m["DestinationSystem"] == self.config["user"]["system"]: self.print(line * 2 + 1, 13, ">")
-                else:
-                    self.print(line * 2 + 1, 2, "{0:>10}   Bodenmission".format(" "))
+    def handleInput(self, key):
+        if key == curses.KEY_UP and self.starting > 0:
+            self.starting -= 1
+        if key == curses.KEY_DOWN and self.starting < len(self.gamedata["fss"]["planets"]) - 17:
+            self.starting += 1
+        # self.gamedata["logger"].info("starting: " + str(self.starting))
+        self.update()
+    def showPlanets(self):
+        if len(self.gamedata["fss"]["planets"]) < 18:
+            self.starting = 0
+        maximum = len(self.gamedata["fss"]["planets"])
+        if maximum  > 17:
+            maximum = 17
+        for i in range(0, maximum):
+            planet = self.gamedata["fss"]["planets"][i + self.starting]
+            name = self.formatPlanetName(planet)
+            type = self.formatBodyType(planet)
+            materials = self.formatMaterials(planet["materials"])
+            color = self.getGravityColor(planet["gravity"] / 10)
+            if planet["landable"]:
+                gravity = "{0}{1:>4.1f}~wG {2:>5.0F}K".format(color, planet["gravity"] / 10 , planet["temp"])
             else:
-                self.print(line * 2 + 1, 2, "{0:>10}   {1}".format("", m["Faction"]))
-            self.print(line * 2 + 0, 2, "{0:>10}   {1}".format(expired, m["LocalisedName"]))
-            line += 1
-
+                gravity = "{0:^4}~w  {1:>5.0F}K".format("--" , planet["temp"])
+            self.print(2 + i, 2, "{0:<25} {1:<12} {2:>15} {3}".format(name, gravity, type, materials))
+    def formatPlanetName(self, planet):
+        if planet["name"] == self.config["user"]["system"]:
+            return planet["name"]
+        return planet["name"].replace(self.config["user"]["system"], "Planet")
+    def formatBodyType(self, planet):
+        count = planet["type"].count(" ")
+        if count > 2: # max. 2 Leerzeichen erlauben
+            parts = planet["type"].split()
+            return parts[0] + " " + parts[1]
+        return planet["type"]
+    def formatMaterials(self, materials):
+        if len(materials) == 0:
+            return ""
+        output = ""
+        for name in materials:
+            if len(output) > 0:
+                output += "/"
+            percent = materials[name] * 100
+            output += "{0}:{1:2.1f}%".format(name, percent)
+        return "(" + output + ")"
+    def getGravityColor(self, gravity):
+        if gravity < 1.0: return "~g"
+        if gravity >= 5.0: return "~r"
+        if gravity >= 2.0: return "~y"
+        return "~w"
 
 
 
@@ -1349,7 +1158,6 @@ class PageSettingsSubpage:
             self.print(line + 5, 23, "~y" + self.arrowLeft + "~w")
     def print(self, posy, posx, content):
         self.basepage.print(posy, posx, content)
-
 class PageSettingsMain(PageSettingsSubpage):
     def __init__(self, config, gamedata, basepage):
         super().__init__(config, gamedata, basepage)
@@ -1407,7 +1215,6 @@ class PageSettingsMain(PageSettingsSubpage):
         if line == 0: 
             self.config["pages"]["activepage"] = "U"
             self.gamedata["logger"].warn("Update für Sternensysteme ausgelöst")
-
 class PageSettingsServices(PageSettingsSubpage):
     def __init__(self, config, gamedata, basepage):
         super().__init__(config, gamedata, basepage)
