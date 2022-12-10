@@ -999,26 +999,41 @@ class PageFSS(PageBasepage):
     def update(self):
         self.screen.clear()
         additional = ""
-        if self.gamedata["fss"]["completed"] == True:
-            additional = " - vollständig"
+        if self.gamedata["fss"]["completed"] == True or self.gamedata["fss"]["count"] > 0:
+            if self.gamedata["fss"]["completed"] == True:
+                additional = " - vollständig"
+            else:
+                additional = " - gesamt " + str(self.gamedata["fss"]["count"]) + " Planeten"
         self.print(0, 2, "Voll Spektrum Scanner für ~g{0}~w{1}".format(self.gamedata["system"]["name"], additional))
         self.showPlanets()
         if len(self.gamedata["fss"]["planets"]) >= 17:
-            self.print(21, 2, "~yCursor Up/Down~w um durch die Planeten zu scrollen~w")
+            self.print(21, 2, "~yCursor Up/Down~w zum scrollen~w")
         self.screen.refresh()
     def handleInput(self, key):
         if key == curses.KEY_UP and self.starting > 0:
             self.starting -= 1
-        if key == curses.KEY_DOWN and self.starting < len(self.gamedata["fss"]["planets"]) - 17:
+        if key == curses.KEY_DOWN and self.starting < len(self.gamedata["fss"]["planets"]) - 18:
             self.starting += 1
+#        if chr(key) == "g":
+#            self.generateVssScanData()
         # self.gamedata["logger"].info("starting: " + str(self.starting))
         self.update()
+    def generateVssScanData(self):
+        for i in range(0, 25):
+            planet = {}
+            planet["name"] = "Planet" + str(i)
+            planet["type"] = "Test"
+            planet["gravity"] = i
+            planet["temp"] = 10 * i
+            planet["materials"] = {}
+            planet["landable"] = True # um die Gravitation anzuzeigen
+            self.gamedata["fss"]["planets"].append(planet)
     def showPlanets(self):
         if len(self.gamedata["fss"]["planets"]) < 18:
             self.starting = 0
         maximum = len(self.gamedata["fss"]["planets"])
-        if maximum  > 17:
-            maximum = 17
+        if maximum  > 18:
+            maximum = 18
         for i in range(0, maximum):
             planet = self.gamedata["fss"]["planets"][i + self.starting]
             name = self.formatPlanetName(planet)

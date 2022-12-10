@@ -61,6 +61,7 @@ gamedata["system"]["name"] = config["user"]["system"]  # Namen übernehmen
 gamedata["fss"] = {}                        # Scanndaten
 gamedata["fss"]["planets"] = []
 gamedata["fss"]["completed"] = False
+gamedata["fss"]["count"] = 0
 
 
 if os.path.exists("esaos.log"): os.remove("esaos.log")
@@ -180,6 +181,7 @@ class MyFileHandler(FileSystemEventHandler):
             if entry["event"] == "NpcCrewPaidWage": Event_NpcCrewPaidWage(entry)
             if entry["event"] == "Scan": Event_Scan(entry)
             if entry["event"] == "FSSAllBodiesFound": Event_FSSAllBodiesFound(entry)
+            if entry["event"] == "FSSDiscoveryScan": Event_FSSDiscoveryScan(entry)
             winmenu.update()
 
 
@@ -263,9 +265,9 @@ def Event_FSDJump(entry):
     gamedata["status"][2] = lineEconomy(entry)
     gamedata["status"][3] = lineFaction(entry)
     gamedata["status"][4] = ""
-    gamedata["fss"] = {}        # letzten Scan löschen
-    gamedata["fss"]["planets"] = []
+    gamedata["fss"]["planets"] = []        # letzten Scan löschen
     gamedata["fss"]["completed"] = False
+    gamedata["fss"]["count"] = 0
     if "StarClass" in entry:
         gamedata["system"]["starclass"] = entry["StarClass"]
     else:
@@ -626,7 +628,13 @@ def Event_FSSAllBodiesFound(entry):
     global gamedata
     gamedata["fss"]["completed"] = True
     autoPage(9)
-
+def Event_FSSDiscoveryScan(entry):
+    global gamedata
+    if "BodyCount" in entry:
+        gamedata["fss"]["count"] = entry["BodyCount"]
+    else:
+        gamedata["fss"]["count"] = -1
+    autoPage(9)
 
 
 # { "timestamp":"2022-10-16T19:06:26Z", "event":"MissionAbandoned", "Name":"Mission_Collect_name", "MissionID":895117670 }
