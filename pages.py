@@ -10,6 +10,7 @@ import random
 import sys
 from os.path import exists
 from datetime import datetime
+from enum import Enum
 
 from tools import getDictItem
 from config import updateConfig
@@ -993,9 +994,22 @@ class PageAsteroid(PageBasepage):       # 8
             line += 1
             self.screen.refresh() # nach jeder Zeile - das suchen der preise dauert immer etwas
 class PageFSS(PageBasepage):
+    SortMode = Enum("SortMode", ["Name", "Gravitation", "Temperatur", "Typ", "MAX_SORTMODE"]) # maybe later - , "Eis", "Feld", "Metall"])
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.starting = 0
+        self.sortmode = PageFSS.SortMode.Name
+    def generateVssScanData(self):
+        # für Debug-Optionen
+        for i in range(0, 25):
+            planet = {}
+            planet["name"] = "Planet" + str(i)
+            planet["type"] = "Test"
+            planet["gravity"] = i
+            planet["temp"] = 260 - 10 * i
+            planet["materials"] = {}
+            planet["landable"] = True # um die Gravitation anzuzeigen
+            self.gamedata["fss"]["planets"].append(planet)
     def update(self):
         self.screen.clear()
         additional = ""
@@ -1005,29 +1019,50 @@ class PageFSS(PageBasepage):
             else:
                 additional = " - gesamt " + str(self.gamedata["fss"]["count"]) + " Planeten"
         self.print(0, 2, "Voll Spektrum Scanner für ~g{0}~w{1}".format(self.gamedata["system"]["name"], additional))
+        self.sortPlanets()
         self.showPlanets()
-        if len(self.gamedata["fss"]["planets"]) >= 17:
-            self.print(21, 2, "~yCursor Up/Down~w zum scrollen~w")
+        self.print(21, 2, "~yCursor Up/Down~w zum Scrollen~w - ~yLeft/Right~w für Sortierung: " + self.sortmode.name)
         self.screen.refresh()
     def handleInput(self, key):
         if key == curses.KEY_UP and self.starting > 0:
             self.starting -= 1
         if key == curses.KEY_DOWN and self.starting < len(self.gamedata["fss"]["planets"]) - 18:
             self.starting += 1
-#        if chr(key) == "g":
-#            self.generateVssScanData()
+        if key == curses.KEY_LEFT and self.sortmode.value > 1:
+            self.sortmode = PageFSS.SortMode(self.sortmode.value - 1)
+        if key == curses.KEY_RIGHT and self.sortmode.value < (PageFSS.SortMode.MAX_SORTMODE.value - 1):
+            self.sortmode = PageFSS.SortMode(self.sortmode.value + 1)
+        if chr(key) == "g":
+            self.generateVssScanData()
         # self.gamedata["logger"].info("starting: " + str(self.starting))
         self.update()
-    def generateVssScanData(self):
-        for i in range(0, 25):
-            planet = {}
-            planet["name"] = "Planet" + str(i)
-            planet["type"] = "Test"
-            planet["gravity"] = i
-            planet["temp"] = 10 * i
-            planet["materials"] = {}
-            planet["landable"] = True # um die Gravitation anzuzeigen
-            self.gamedata["fss"]["planets"].append(planet)
+    def sortPlanets(self):
+        planets = self.gamedata["fss"]["planets"]
+        # erstmal ganz dumm Bubble-Sort - und den auch noch ganz simple
+        changed = False
+        for i in range(len(planets) - 1):
+            p1 = planets[i]
+            p2 = planets[i + 1]
+            match self.sortmode:    # ! DOUH ! irgendwie direkt mit den Key arbeiten
+                case PageFSS.SortMode.Name:
+                    if p1["name"] > p2["name"]:
+                        changed = True
+                case PageFSS.SortMode.Gravitation:
+                    if p1["gravity"] > p2["gravity"]:
+                        changed = True
+                case PageFSS.SortMode.Temperatur:
+                    if p1["temp"] > p2["temp"]:
+                        changed = True
+                case PageFSS.SortMode.Typ:
+                    if p1["type"] > p2["type"]:
+                        changed = True
+            # es muss getauscht werden
+            if changed == True:
+                planets[i] = p2
+                planets[i + 1] = p1
+        # möglicher weise kann das in den oberen Block - wer weis...
+        if changed == True:
+            self.sortPlanets()
     def showPlanets(self):
         if len(self.gamedata["fss"]["planets"]) < 18:
             self.starting = 0
