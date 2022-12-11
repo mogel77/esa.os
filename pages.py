@@ -999,6 +999,8 @@ class PageFSS(PageBasepage):
         super().__init__(config, gamedata)
         self.starting = 0
         self.sortmode = PageFSS.SortMode.Name
+        self.sortup = True
+        self.gamedata["logger"].info("FSS initialisiert")
     def generateFssScanData(self):
         # für Debug-Optionen
         for i in range(0, 25):
@@ -1007,7 +1009,8 @@ class PageFSS(PageBasepage):
             planet["type"] = "Test"
             planet["gravity"] = i
             planet["temp"] = 260 - 10 * i
-            planet["materials"] = {}
+            planet["composition"] = {}
+            # - planet["materials"] = {}
             planet["landable"] = True # um die Gravitation anzuzeigen
             self.gamedata["fss"]["planets"].append(planet)
     def update(self):
@@ -1023,7 +1026,13 @@ class PageFSS(PageBasepage):
         self.print(0, 2, "Voll Spektrum Scanner für ~g{0}~w{1}".format(self.gamedata["system"]["name"], additional))
         self.sortPlanets()
         self.showPlanets()
-        self.print(21, 2, "Cursor ~yUp/Down~w zum Scrollen~w - ~yLeft/Right~w für Sortierung: ~g" + self.sortmode.name + "~w")
+        sortierung = ""
+        if self.sortup:
+            sortierung = "Up"
+        else:
+            sortierung = "Down"
+        sortierung = "(~g" + sortierung + "~w[~yR~w])"
+        self.print(21, 2, "Cursor ~yUp/Down~w zum Scrollen~w - ~yLeft/Right~w für Sortierung: ~g" + self.sortmode.name + "~w " + sortierung)
         self.screen.refresh()
     def handleInput(self, key):
         if key == curses.KEY_UP and self.starting > 0:
@@ -1034,13 +1043,20 @@ class PageFSS(PageBasepage):
             self.sortmode = PageFSS.SortMode(self.sortmode.value - 1)
         if key == curses.KEY_RIGHT and self.sortmode.value < (PageFSS.SortMode.MAX_SORTMODE.value - 1):
             self.sortmode = PageFSS.SortMode(self.sortmode.value + 1)
-        if chr(key) == "g":
-            self.generateFssScanData()
-        # self.gamedata["logger"].info("starting: " + str(self.starting))
+#        if chr(key) == "g":
+#            self.generateFssScanData()
+        if chr(key) == "r":
+            self.sortup = not self.sortup
         self.update()
     def sortPlanets(self):
-        planets = self.gamedata["fss"]["planets"]
         # erstmal ganz dumm Bubble-Sort
+        if self.sortup:
+            self.sortPlanetsUp()
+        else:
+            self.sortPlanetsDown()
+    def sortPlanetsUp(self):
+        # self.gamedata["logger"].info("sortiere Planeten AUFsteigend")
+        planets = self.gamedata["fss"]["planets"]
         changed = False
         for i in range(len(planets) - 1):
             p1 = planets[i]
@@ -1080,7 +1096,50 @@ class PageFSS(PageBasepage):
             if changed == True:
                 planets[i] = p2
                 planets[i + 1] = p1
-                self.sortPlanets()
+                self.sortPlanetsUp()
+    def sortPlanetsDown(self):
+        # self.gamedata["logger"].info("sortiere Planeten ABsteigend")
+        planets = self.gamedata["fss"]["planets"]
+        changed = False
+        for i in range(len(planets) - 1):
+            p1 = planets[i]
+            p2 = planets[i + 1]
+            match self.sortmode:    # ! DOUH ! irgendwie direkt mit den Key arbeiten
+                case PageFSS.SortMode.Name:
+                    changed = p1["name"] < p2["name"]
+                case PageFSS.SortMode.Gravitation:
+                    # die Gravitation wird bei nicht landbaren Planeten ausgeblendet
+                    # das muss sich auch auf die Sportierung auswirken - müssen runter fallen
+                    if p1["landable"] and p2["landable"]:
+                        changed = p1["gravity"] < p2["gravity"]
+                    else:
+                        changed = p2["landable"]
+                case PageFSS.SortMode.Temperatur:
+                    changed = p1["temp"] < p2["temp"]
+                case PageFSS.SortMode.Typ:
+                    changed = p1["type"] < p2["type"]
+                case PageFSS.SortMode.Eis:
+                    if "Ice" in p1["composition"] and "Ice" in p2["composition"]:
+                        changed = p1["composition"]["Ice"] < p2["composition"]["Ice"]
+                    else:
+                        # in p1 oder p2 existiert eis - wenn Eis in p1 existiert
+                        # dann wird getauscht - somit sollten alle leeren Planeten aufsteigen fallen
+                        changed = "Ice" in p2["composition"]
+                case PageFSS.SortMode.Fels:
+                    if "Rock" in p1["composition"] and "Ice" in p2["composition"]:
+                        changed = p1["composition"]["Rock"] < p2["composition"]["Rock"]
+                    else:
+                        changed = "Rock" in p2["composition"]
+                case PageFSS.SortMode.Metall:
+                    if "Ice" in p1["composition"] and "Ice" in p2["composition"]:
+                        changed = p1["composition"]["Metal"] < p2["composition"]["Metal"]
+                    else:
+                        changed = "Metal" in p2["composition"]
+            # es muss getauscht werden
+            if changed == True:
+                planets[i] = p2
+                planets[i + 1] = p1
+                self.sortPlanetsDown()
     def showPlanets(self):
         if len(self.gamedata["fss"]["planets"]) < 18:
             self.starting = 0
@@ -1099,9 +1158,15 @@ class PageFSS(PageBasepage):
                 gravity = "{0:^4}~w  {1:>5.0F}K".format("--" , planet["temp"])
             self.print(2 + i, 2, "{0:<25} {1:<12} {2:>15}   {3}".format(name, gravity, type, materials))
     def formatPlanetName(self, planet):
-        if planet["name"] == self.config["user"]["system"]:
-            return planet["name"]
-        return planet["name"].replace(self.config["user"]["system"], "Planet")
+        name = planet["name"]
+        if name == self.config["user"]["system"]:
+            return name
+        if "Belt Cluster" in name:
+            # Belt Cluster selber erstmal löschen, steht sonst
+            # doppelt im Namen - Leerzeichen beachten !
+            name = name.replace("Belt Cluster ", "")
+            name = name.replace(self.config["user"]["system"], "Belt Cluster")
+        return name.replace(self.config["user"]["system"], "Planet")
     def formatBodyType(self, planet):
         count = planet["type"].count(" ")
         if count > 2: # max. 2 Leerzeichen erlauben
