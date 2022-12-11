@@ -110,6 +110,7 @@ def updateConfig():
     checkEntry('pages', 'services', 'Repair, Mining, Market, Restock, Refuel')  # die Services werden angezeigt
     checkEntry('pages', 'services_known', '')       # Services die über alle Stationen angezeigt werden
     checkEntry('pages', 'coloring', 'yes')          # wenn Farben verwendet werden sollen
+    checkEntry('pages', 'onlydetailed', 'yes')      # FSS nicht im Autoscan
 
     # alten & unnützen Kram löschen
     removeSection('twitter')

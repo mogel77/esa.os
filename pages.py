@@ -994,12 +994,12 @@ class PageAsteroid(PageBasepage):       # 8
             line += 1
             self.screen.refresh() # nach jeder Zeile - das suchen der preise dauert immer etwas
 class PageFSS(PageBasepage):
-    SortMode = Enum("SortMode", ["Name", "Gravitation", "Temperatur", "Typ", "MAX_SORTMODE"]) # maybe later - , "Eis", "Feld", "Metall"])
+    SortMode = Enum("SortMode", ["Name", "Gravitation", "Temperatur", "Typ", "Eis", "Fels", "Metall", "MAX_SORTMODE"])
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.starting = 0
         self.sortmode = PageFSS.SortMode.Name
-    def generateVssScanData(self):
+    def generateFssScanData(self):
         # für Debug-Optionen
         for i in range(0, 25):
             planet = {}
@@ -1017,11 +1017,13 @@ class PageFSS(PageBasepage):
             if self.gamedata["fss"]["completed"] == True:
                 additional = " - vollständig"
             else:
-                additional = " - gesamt " + str(self.gamedata["fss"]["count"]) + " Planeten"
+                total = self.gamedata["fss"]["count"]
+                found = len(self.gamedata["fss"]["planets"])
+                additional = " - gescannt {0} von {1} Planeten".format(found, total)
         self.print(0, 2, "Voll Spektrum Scanner für ~g{0}~w{1}".format(self.gamedata["system"]["name"], additional))
         self.sortPlanets()
         self.showPlanets()
-        self.print(21, 2, "~yCursor Up/Down~w zum Scrollen~w - ~yLeft/Right~w für Sortierung: " + self.sortmode.name)
+        self.print(21, 2, "Cursor ~yUp/Down~w zum Scrollen~w - ~yLeft/Right~w für Sortierung: ~g" + self.sortmode.name + "~w")
         self.screen.refresh()
     def handleInput(self, key):
         if key == curses.KEY_UP and self.starting > 0:
@@ -1033,36 +1035,52 @@ class PageFSS(PageBasepage):
         if key == curses.KEY_RIGHT and self.sortmode.value < (PageFSS.SortMode.MAX_SORTMODE.value - 1):
             self.sortmode = PageFSS.SortMode(self.sortmode.value + 1)
         if chr(key) == "g":
-            self.generateVssScanData()
+            self.generateFssScanData()
         # self.gamedata["logger"].info("starting: " + str(self.starting))
         self.update()
     def sortPlanets(self):
         planets = self.gamedata["fss"]["planets"]
-        # erstmal ganz dumm Bubble-Sort - und den auch noch ganz simple
+        # erstmal ganz dumm Bubble-Sort
         changed = False
         for i in range(len(planets) - 1):
             p1 = planets[i]
             p2 = planets[i + 1]
             match self.sortmode:    # ! DOUH ! irgendwie direkt mit den Key arbeiten
                 case PageFSS.SortMode.Name:
-                    if p1["name"] > p2["name"]:
-                        changed = True
+                    changed = p1["name"] > p2["name"]
                 case PageFSS.SortMode.Gravitation:
-                    if p1["gravity"] > p2["gravity"]:
-                        changed = True
+                    # die Gravitation wird bei nicht landbaren Planeten ausgeblendet
+                    # das muss sich auch auf die Sportierung auswirken - müssen runter fallen
+                    if p1["landable"] and p2["landable"]:
+                        changed = p1["gravity"] > p2["gravity"]
+                    else:
+                        changed = p2["landable"]
                 case PageFSS.SortMode.Temperatur:
-                    if p1["temp"] > p2["temp"]:
-                        changed = True
+                    changed = p1["temp"] > p2["temp"]
                 case PageFSS.SortMode.Typ:
-                    if p1["type"] > p2["type"]:
-                        changed = True
+                    changed = p1["type"] > p2["type"]
+                case PageFSS.SortMode.Eis:
+                    if "Ice" in p1["composition"] and "Ice" in p2["composition"]:
+                        changed = p1["composition"]["Ice"] > p2["composition"]["Ice"]
+                    else:
+                        # in p1 oder p2 existiert eis - wenn Eis in p2 existiert
+                        # dann wird getauscht - somit sollten alle leeren Planeten runter fallen
+                        changed = "Ice" in p2["composition"]
+                case PageFSS.SortMode.Fels:
+                    if "Rock" in p1["composition"] and "Ice" in p2["composition"]:
+                        changed = p1["composition"]["Rock"] > p2["composition"]["Rock"]
+                    else:
+                        changed = "Rock" in p2["composition"]
+                case PageFSS.SortMode.Metall:
+                    if "Ice" in p1["composition"] and "Ice" in p2["composition"]:
+                        changed = p1["composition"]["Metal"] > p2["composition"]["Metal"]
+                    else:
+                        changed = "Metal" in p2["composition"]
             # es muss getauscht werden
             if changed == True:
                 planets[i] = p2
                 planets[i + 1] = p1
-        # möglicher weise kann das in den oberen Block - wer weis...
-        if changed == True:
-            self.sortPlanets()
+                self.sortPlanets()
     def showPlanets(self):
         if len(self.gamedata["fss"]["planets"]) < 18:
             self.starting = 0
@@ -1073,13 +1091,13 @@ class PageFSS(PageBasepage):
             planet = self.gamedata["fss"]["planets"][i + self.starting]
             name = self.formatPlanetName(planet)
             type = self.formatBodyType(planet)
-            materials = self.formatMaterials(planet["materials"])
+            materials = self.formatComposition(planet["composition"])
             color = self.getGravityColor(planet["gravity"] / 10)
             if planet["landable"]:
                 gravity = "{0}{1:>4.1f}~wG {2:>5.0F}K".format(color, planet["gravity"] / 10 , planet["temp"])
             else:
                 gravity = "{0:^4}~w  {1:>5.0F}K".format("--" , planet["temp"])
-            self.print(2 + i, 2, "{0:<25} {1:<12} {2:>15} {3}".format(name, gravity, type, materials))
+            self.print(2 + i, 2, "{0:<25} {1:<12} {2:>15}   {3}".format(name, gravity, type, materials))
     def formatPlanetName(self, planet):
         if planet["name"] == self.config["user"]["system"]:
             return planet["name"]
@@ -1090,16 +1108,16 @@ class PageFSS(PageBasepage):
             parts = planet["type"].split()
             return parts[0] + " " + parts[1]
         return planet["type"]
-    def formatMaterials(self, materials):
-        if len(materials) == 0:
+    def formatComposition(self, composition):
+        if len(composition) == 0:
             return ""
         output = ""
-        for name in materials:
+        for name in composition:
             if len(output) > 0:
-                output += "/"
-            percent = materials[name] * 100
-            output += "{0}:{1:2.1f}%".format(name, percent)
-        return "(" + output + ")"
+                output += " - "
+            percent = composition[name] * 100
+            output += "{0}:{1:4.1f}%".format(name, percent)
+        return output
     def getGravityColor(self, gravity):
         if gravity < 1.0: return "~g"
         if gravity >= 5.0: return "~r"
@@ -1227,6 +1245,7 @@ class PageSettingsMain(PageSettingsSubpage):
         self.updateOptionLine(7, self.getOptionValueSelected(7), "Autostart von EDMarketConnector")
         self.updateOptionLine(8, self.getOptionValueSelected(8), "Systeme weiter vom Heimatsystem, werden gelöscht/ignoriert (Ly)")
         self.updateOptionLine(9, self.getOptionValueSelected(9), "Events anzeigen (Debug-Funktion)")
+        self.updateOptionLine(10, self.getOptionValueSelected(10), "VSS Seite nur bei manuellem Scan")
     def getOptionValueSelected(self, line):
         if line == 0: return "update"
         if line == 1: return self.config["distances"]["systems"]
@@ -1238,6 +1257,7 @@ class PageSettingsMain(PageSettingsSubpage):
         if line == 7: return self.config["pages"]["edmc"]
         if line == 8: return self.config["filter"]["distance"]
         if line == 9: return self.config["pages"]["events"]
+        if line == 10: return self.config["pages"]["onlydetailed"]
     def setOptionValueSelected(self, line, option):
         # Zeile 0 ist uninteressant
         if line == 1: self.config["distances"]["systems"] = str(option)
@@ -1249,6 +1269,7 @@ class PageSettingsMain(PageSettingsSubpage):
         if line == 7: self.config["pages"]["edmc"] = str(option)
         if line == 8: self.config["filter"]["distance"] = str(option)
         if line == 9: self.config["pages"]["events"] = str(option)
+        if line == 10: self.config["pages"]["onlydetailed"] = str(option)
     def getOptionValuePossible(self, line):
         distances = [ 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000 ]
         if line == 0: return "update"
@@ -1261,6 +1282,7 @@ class PageSettingsMain(PageSettingsSubpage):
         if line == 7: return [ "yes", "no" ]
         if line == 8: return distances
         if line == 9: return [ "yes", "no" ]
+        if line == 10: return [ "yes", "no" ]
     def chooseSpecialFunction(self, line):
         if line == 0: 
             self.config["pages"]["activepage"] = "U"

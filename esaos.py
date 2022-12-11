@@ -615,15 +615,19 @@ def Event_Scan(entry):
     else:
         planet["temp"] = 0
     if "Composition" in entry:
-        planet["materials"] = entry["Composition"]      # dict
+        planet["composition"] = entry["Composition"]      # dict
     else:
-        planet["materials"] = { }
+        planet["composition"] = { }
     if "Landable" in entry:
         planet["landable"] = entry["Landable"]
     else:
         planet["landable"] = False
     gamedata["fss"]["planets"].append(planet)
-    autoPage(9)
+    if config["pages"]["onlydetailed"] == "no":
+        autoPage(9)
+    else:
+        if entry["ScanType"] == "Detailed":
+            autoPage(9)
 def Event_FSSAllBodiesFound(entry):
     global gamedata
     gamedata["fss"]["completed"] = True
@@ -635,6 +639,7 @@ def Event_FSSDiscoveryScan(entry):
     else:
         gamedata["fss"]["count"] = -1
     autoPage(9)
+
 
 
 # { "timestamp":"2022-10-16T19:06:26Z", "event":"MissionAbandoned", "Name":"Mission_Collect_name", "MissionID":895117670 }
