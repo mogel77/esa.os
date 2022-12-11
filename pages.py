@@ -1001,6 +1001,7 @@ class PageFSS(PageBasepage):
         self.sortmode = PageFSS.SortMode.Name
         self.sortup = True
         self.gamedata["logger"].info("FSS initialisiert")
+        self.details = False    # True -> Materialien sonst die Zusammensetzung
     def generateFssScanData(self):
         # für Debug-Optionen
         for i in range(0, 25):
@@ -1010,7 +1011,7 @@ class PageFSS(PageBasepage):
             planet["gravity"] = i
             planet["temp"] = 260 - 10 * i
             planet["composition"] = {}
-            # - planet["materials"] = {}
+            planet["materials"] = {}
             planet["landable"] = True # um die Gravitation anzuzeigen
             self.gamedata["fss"]["planets"].append(planet)
     def update(self):
@@ -1032,7 +1033,7 @@ class PageFSS(PageBasepage):
         else:
             sortierung = "Down"
         sortierung = "(~g" + sortierung + "~w[~yR~w])"
-        self.print(21, 2, "Cursor ~yUp/Down~w zum Scrollen~w - ~yLeft/Right~w für Sortierung: ~g" + self.sortmode.name + "~w " + sortierung)
+        self.print(21, 2, "Cursor ~yUp/Down~w zum Scrollen~w - ~yLeft/Right~w für Sortierung: ~g" + self.sortmode.name + "~w " + sortierung + " - [~yM~w] Materialien")
         self.screen.refresh()
     def handleInput(self, key):
         if key == curses.KEY_UP and self.starting > 0:
@@ -1043,8 +1044,10 @@ class PageFSS(PageBasepage):
             self.sortmode = PageFSS.SortMode(self.sortmode.value - 1)
         if key == curses.KEY_RIGHT and self.sortmode.value < (PageFSS.SortMode.MAX_SORTMODE.value - 1):
             self.sortmode = PageFSS.SortMode(self.sortmode.value + 1)
-#        if chr(key) == "g":
-#            self.generateFssScanData()
+        if chr(key) == "g":
+            self.generateFssScanData()
+        if chr(key) == "m":
+            self.details = not self.details
         if chr(key) == "r":
             self.sortup = not self.sortup
         self.update()
@@ -1150,13 +1153,13 @@ class PageFSS(PageBasepage):
             planet = self.gamedata["fss"]["planets"][i + self.starting]
             name = self.formatPlanetName(planet)
             type = self.formatBodyType(planet)
-            materials = self.formatComposition(planet["composition"])
+            details = self.formatDetails(planet)
             color = self.getGravityColor(planet["gravity"] / 10)
             if planet["landable"]:
                 gravity = "{0}{1:>4.1f}~wG {2:>5.0F}K".format(color, planet["gravity"] / 10 , planet["temp"])
             else:
                 gravity = "{0:^4}~w  {1:>5.0F}K".format("--" , planet["temp"])
-            self.print(2 + i, 2, "{0:<25} {1:<12} {2:>15}   {3}".format(name, gravity, type, materials))
+            self.print(2 + i, 2, "{0:<25} {1:<12} {2:>15}   {3}".format(name, gravity, type, details))
     def formatPlanetName(self, planet):
         name = planet["name"]
         if name == self.config["user"]["system"]:
@@ -1173,6 +1176,10 @@ class PageFSS(PageBasepage):
             parts = planet["type"].split()
             return parts[0] + " " + parts[1]
         return planet["type"]
+    def formatDetails(self, planet):
+        if self.details:
+            return self.formatMaterials(planet["materials"])
+        return self.formatComposition(planet["composition"])
     def formatComposition(self, composition):
         if len(composition) == 0:
             return ""
@@ -1182,6 +1189,28 @@ class PageFSS(PageBasepage):
                 output += " - "
             percent = composition[name] * 100
             output += "{0}:{1:4.1f}%".format(name, percent)
+        return output
+    def formatMaterials(self, materials):
+        output = ""
+        pse = {
+                "arsenic":"As", "iron":"Fe", "sulphur":"S", "carbon":"C", "phosphorus":"P", "nickel":"Ni",
+                "germanium":"Ge", "zinc":"Zn", "zirconium":"Zr", "cadmium":"Cd", "tellurium":"Te", "mercury":"Hg",
+                "chromium":"Cr", "mangan":"Mn", "selenium":"Se", "vanadium":"V", "niobium":"Nb", "tungsten":"W", 
+                "molybdenum":"Mo", "ruthenium":"Ru", "antimony":"Sb", "tin":"Sn", "polonium":"Po", "technetium":"Tc",
+                "manganese":"Mn", "yttrium":"Y"
+        }
+        count = 0
+        for mat in materials:
+            count += 1
+            if count > 6:
+                break
+            if len(output) > 0:
+                output += " "
+            if mat["Name"] in pse:
+                name = pse[mat["Name"]]
+            else:
+                name = mat["Name"] # für unbekanntes
+            output += "{0}:{1:.1f}%".format(name, mat["Percent"])
         return output
     def getGravityColor(self, gravity):
         if gravity < 1.0: return "~g"

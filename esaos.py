@@ -618,6 +618,10 @@ def Event_Scan(entry):
         planet["composition"] = entry["Composition"]      # dict
     else:
         planet["composition"] = { }
+    if "Materials" in entry:
+        planet["materials"] = entry["Materials"]
+    else:
+        planet["materials"] = { }
     if "Landable" in entry:
         planet["landable"] = entry["Landable"]
     else:
