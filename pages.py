@@ -613,6 +613,7 @@ class PageMissions(PageBasepage):       # 3
             if "mission_delivery_cooperative" in mission_type: self.showDeliveryCoop(mission, line)
             if "mission_onfoot_collect" in mission_type: self.showFootCollect(mission, line)
             if "mission_salvage" in mission_type: self.showMissionDefault(mission, line)
+            if "mission_courier" in mission_type: self.showMissionDefault(mission, line)
             if "mission_courier_service" in mission_type: self.showMissionDefault(mission, line)
             if "mission_delivery_democracy" in mission_type: self.showMissionDefault(mission, line)
             if "mission_courier_engineer" in mission_type: self.showMissionDefault(mission, line)
