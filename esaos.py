@@ -716,6 +716,12 @@ def autoPage(page):
     if config["pages"]["autopage"] == "yes": config["pages"]["activepage"] = str(page)
     pageManager()
 def pageManager():
+    # kompletten Screen neu aufbauen
+    winmenu.update()
+    winheader.update()
+    winevents.update()
+    winstatus.update()
+    # Page anzeigen
     if config["pages"]["events"] == "yes":
         pageManager_raw()       # debug-meldungen und Fehler des Programms
     else:
@@ -834,10 +840,6 @@ def main(stdsrc):
     else:
         gamedata["logger"].info("keine Modulnamen vorhanden")
 
-    winmenu.update()
-    winheader.update()
-    winevents.update()
-    winstatus.update()
     pageManager()
 
     observer = None
