@@ -268,7 +268,7 @@ class PageDownloads(PageBasepage):      # U
     def download(self, key):
         url = self.config["urls"][key]
         name = self.config["localnames"][key]
-        headers = { "User-Agent" : "Github / ESA.OS (Elite Dangerous Game Assistant)" }
+        headers = { "User-Agent" : "Github / ESA.OS (Elite Ship Assistant)" }
         r = requests.get(url, allow_redirects=True, headers=headers)
         open(name, 'wb').write(r.content)
 
@@ -1003,6 +1003,9 @@ class PageFSS(PageBasepage):
         self.sortup = True
         self.gamedata["logger"].info("FSS initialisiert")
         self.details = False    # True -> Materialien sonst die Zusammensetzung
+        if exists(self.config["localnames"]["fss"]):
+            with open(self.config["localnames"]["fss"], "r") as f:
+                self.gamedata["fss"]["planets"] = json.load(f)
     def generateFssScanData(self):
         # für Debug-Optionen
         for i in range(0, 25):
