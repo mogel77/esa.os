@@ -64,7 +64,8 @@ def updateConfig():
     checkEntry('localnames', 'outfit', 'daten/outfit.json')
     checkEntry('localnames', 'asteroid', 'daten/asteroid.json')
     checkEntry('localnames', 'modnames', 'resources/modnames.json')
-    
+    checkEntry('localnames', 'fss', 'daten/fss.json')
+
     # Zeitstempel der Downloads
     checkEntry('downloads', 'commodities', '20220101-000000')
     checkEntry('downloads', 'galaxy_gz', '20220101-000000')

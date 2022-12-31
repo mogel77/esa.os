@@ -626,7 +626,9 @@ def Event_Scan(entry):
         planet["landable"] = entry["Landable"]
     else:
         planet["landable"] = False
-    gamedata["fss"]["planets"].append(planet)
+    gamedata["fss"]["planets"].append(planet) # TODO auf doppelte prüfen
+    with open(config["localnames"]["fss"], "w") as out:
+        out.write(json.dumps(gamedata["fss"]["planets"]) + '\n')
     if config["pages"]["onlydetailed"] == "no":
         autoPage(9)
     else:
