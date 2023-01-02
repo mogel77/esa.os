@@ -47,6 +47,14 @@ def updateConfig():
     # Download URLS
     # checkEntry('urls', 'commodities', 'https://edgalaxydata.space/EDDB/dumps/commodities.json')
     checkEntry('urls', 'galaxy_gz', 'https://downloads.spansh.co.uk/galaxy_1day.json.gz')
+    # API für EDDB.IO
+    checkEntry('urls', 'systems', 'https://eddb.io/archive/v6/systems_populated.jsonl')
+    checkEntry('urls', 'stations', 'https://eddb.io/archive/v6/stations.jsonl')
+    checkEntry('urls', 'prices', 'https://eddb.io/archive/v6/listings.csv')
+    checkEntry('urls', 'commodities', 'https://eddb.io/archive/v6/commodities.json')
+    checkEntry('urls', 'prices', 'https://eddb.io/archive/v6/listings.csv')
+    # -- later, maybe - checkEntry('urls', 'modules', 'https://eddb.io/archive/v6/modules.json')
+
 
     # Dateinamen nach dem Download bzw. zum Speichern der Daten
     checkEntry('localnames', 'stations', 'daten/stations.json')
