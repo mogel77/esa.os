@@ -343,7 +343,10 @@ class PageDownloads(PageBasepage):      # U
                             for b in g["bodies"]:
                                 body = { }
                                 body["name"] = b["name"]
-                                body["type"] = b["type"]
+                                if "typ" in b:
+                                    body["type"] = b["type"]
+                                else:
+                                    body["type"] = "unknown"
                                 body["id"] = b["bodyId"]
                                 # belts -> []
                                 # materials -> {}
