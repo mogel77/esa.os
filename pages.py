@@ -277,32 +277,85 @@ class PageDownloads(PageBasepage):      # U
         self.print(y + 1, x, "> ")
         self.screen.refresh()
 
+    def downloadAndClip(self):
+        # download
+        self.download("galaxy_gz")
+        # auspacken
+        self.printline(14, 5, "> gzip -u galaxy.gz")
+        with gzip.open(self.config["localnames"]["galaxy_gz"], 'rb') as f_in:
+            with open(self.config["localnames"]["galaxy_json"], 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+        # manuell wandeln von JSON nach JSONL
+        self.printline(15, 5, "> split galaxy.json -format jsonl")
+        with open(self.config["localnames"]["galaxy_json"], 'rb+') as file:
+            file.seek(0, 0)
+            # Klammer '[' am Anfang löschen - davon ausgehend das kein BOM
+            # vorhanden ist und es gleich damit losgeht
+            file.write(b' ')
+            # Klammer ']' am Ende suchen und löschen
+            for i in range(0, 10):
+                file.seek(0 - i, 2)
+                character = file.read(1)
+                # print(character)
+                if character == b']':
+                    # durch das lesen sind wir einmal weiter gerutscht
+                    file.seek(0 - i, 2)
+                    # Klammer löschen
+                    file.write(b' ')
+                    break # komplett abbrechen - sonst werden
+                # weitere Klammern gefunden, welche den letzten Datensatz zerstören
+            filesize = os.stat(self.config["localnames"]["galaxy_json"]).st_size
+            position = 0
+            clipcounter = 0
+            #print("Filesize: {0} bytes".format(filesize))
+            while position < (filesize - 2):
+                file.seek(position, 0)
+                character = file.read(1)
+
+                # Klammern zählen und ggf.
+                # das Komma ersetzen
+                if character == b'{':
+                    clipcounter += 1
+                if character == b'}':
+                    clipcounter -= 1
+                if character == b',':
+                    if clipcounter == 0:
+                        file.seek(position, 0)  # gleiche Pos
+                        file.write(b'\n')       # Zeilenumbruch erzwingen
+                        # print(f'Zeilenumbruch bei {position}')
+                position += 1
+                
+                # Sicherheitscheck
+                if clipcounter < 0:
+                    #print(f'tja, schief gelaufen bei Position {position}')
+                    break
+
     def update(self):
         self.gamedata["stations"] = []
         self.screen.clear()
         for i in range(0, len(self.uds)): self.print(i + 2, 5, self.uds[i])
         self.screen.refresh()
         self.printline(13, 5, "> download galaxy.gz \"https://files.egn/galaxy.gz\"")
-        self.download("galaxy_gz")
-        self.printline(14, 5, "> gzip -u galaxy.gz")
-        with gzip.open(self.config["localnames"]["galaxy_gz"], 'rb') as f_in:
-            with open(self.config["localnames"]["galaxy_json"], 'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
+        self.downloadAndClip()
         usecarrier = "-nocarrier"
         if self.config["distances"]["carrier"] == "yes": usecarrier = "-usecarrier"
-        self.printline(15, 5, "> get stations from galaxy.json -max {0}ly {1}".format(self.config["filter"]["distance"], usecarrier))
+        self.printline(16, 5, "> get stations from galaxy.json -max {0}ly {1}".format(self.config["filter"]["distance"], usecarrier))
         j_stations = []     # Array
         j_bodies = []
         firsthundret = 0
         with open(self.config["localnames"]["galaxy_json"], "r") as f:
-            galaxy = json.load(f)
+#            galaxy = json.load(f)
             with open(self.config["localnames"]["bodies"], "w") as bodies:
                 with open(self.config["localnames"]["stations"], "w") as stations:
                     hx = float(self.config["user"]["homex"])
                     hy = float(self.config["user"]["homey"])
                     hz = float(self.config["user"]["homez"])
                     userhome = [ hx, hy, hz ]
-                    for g in galaxy:
+                    for line in f:
+                        l = line.strip()  # einkürzen
+                        if len(l) == 0:   # keine gültige Galaxy
+                            continue
+                        g = json.loads(l) # Galaxy zerlegen
                         dist = math.dist([ g["coords"]["x"], g["coords"]["y"], g["coords"]["z"] ], userhome)
                         if dist > float(self.config["filter"]["distance"]): continue
                         for station in g["stations"]:
