@@ -37,7 +37,7 @@ class WinBaseWindow:
             return key
         if not lang in self.gamedata["translations"][key]:
             self.gamedata["logger"].error(f"Sprache '{lang}' für '{key}' nicht gefunden")
-            return "MISSING_LANG"
+            return lang
         return self.gamedata["translations"][key][lang]
 
 
@@ -111,7 +111,7 @@ class WinMenu(WinBaseWindow):
             self.printMenuEntry(i + 3, modules[i][-14:], (i + 1))
         
         line = 13
-        line = self.printMenuEntry(line, "Settings", "S")
+        line = self.printMenuEntry(line, self.t("WIN_MENU_SETTINGS"), "S")
         # -- veraltet -- if not self.config["twitter"]["api_key"] == "unset": line = self.printMenuEntry(line, "Twitter", "T")
 
     def update_chatter(self):
