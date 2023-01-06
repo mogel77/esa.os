@@ -30,6 +30,16 @@ class WinBaseWindow:
     def dot(self, sy, sx, dot):
         self.print(sy, sx, dot)
 
+    def t(self, key):
+        lang = self.config["user"]["language"]
+        if not key in self.gamedata["translations"]:
+            self.gamedata["logger"].error(f"Key '{key}' nicht gefunden")
+            return key
+        if not lang in self.gamedata["translations"][key]:
+            self.gamedata["logger"].error(f"Sprache '{lang}' für '{key}' nicht gefunden")
+            return "MISSING_LANG"
+        return self.gamedata["translations"][key][lang]
+
 
 
 
@@ -78,7 +88,8 @@ class WinMenu(WinBaseWindow):
         self.screen.clear()
         self.update_chatter()
         self.update_menu()
-        self.print(1, 0, "          Menü > ")
+        output = self.t("WIN_MENU_MENU")
+        self.print(1, 14 - len(output), f"{output} > ")
         self.screen.refresh()
 
     def printMenuEntry(self, line, text, key):
@@ -87,7 +98,15 @@ class WinMenu(WinBaseWindow):
 
     def update_menu(self):
         if not self.config["user"]["license"] == "yes": return
-        modules = [ "Cargo", "Route", "Mission", "Module", "Hangar", "Ausstattung", "SAA Scan", "Asteroid Scan", "VSS" ]
+        modules = [ self.t("WIN_MENU_CARGO"), 
+                    self.t("WIN_MENU_ROUTE"),
+                    self.t("WIN_MENU_MISSIONS"),
+                    self.t("WIN_MENU_MODULES"),
+                    self.t("WIN_MENU_HANGAR"),
+                    self.t("WIN_MENU_OUTFIT"),
+                    self.t("WIN_MENU_SAA"),
+                    self.t("WIN_MENU_ASTEROID"),
+                    self.t("WIN_MENU_FSS") ]
         for i in range(0, len(modules)):
             self.printMenuEntry(i + 3, modules[i][-14:], (i + 1))
         

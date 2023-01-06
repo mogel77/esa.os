@@ -72,6 +72,20 @@ gamedata["logger"].addHandler(hdlr)
 gamedata["logger"].setLevel(logging.DEBUG)
 gamedata["logger"].info("Startup")
 
+# CSV einlesen
+gamedata["translations"] = {}
+with open(config["localnames"]["translations"]) as csvfile:
+    # { key : { lang : trans , ... } }
+    header = csvfile.readline().split()
+    for line in csvfile:
+        row = {}
+        part = line.split()
+        for i in range(1, len(header)):
+            row[header[i]] = part[i]
+        gamedata["translations"][part[0]] = row
+
+
+
 stdscr = curses.initscr()
 
 

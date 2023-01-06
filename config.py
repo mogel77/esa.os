@@ -65,6 +65,7 @@ def updateConfig():
     checkEntry('localnames', 'asteroid', 'daten/asteroid.json')
     checkEntry('localnames', 'modnames', 'resources/modnames.json')
     checkEntry('localnames', 'fss', 'daten/fss.json')
+    checkEntry('localnames', 'translations', 'resources/translations.tsv')
 
     # Zeitstempel der Downloads
     checkEntry('downloads', 'commodities', '20220101-000000')
@@ -101,6 +102,7 @@ def updateConfig():
     checkEntry('user', 'squadrank', '0')
     checkEntry('user', 'channel', 'auto')
     checkEntry('user', 'travel', '0')               # gesamte Resiedistanz
+    checkEntry('user', 'language', 'de')
 
     # Seitenmanagement
     checkEntry('pages', 'activepage','1')           # aktive Seite
