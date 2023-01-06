@@ -76,14 +76,19 @@ gamedata["logger"].info("Startup")
 gamedata["translations"] = {}
 with open(config["localnames"]["translations"]) as csvfile:
     # { key : { lang : trans , ... } }
-    header = csvfile.readline().split()
+    header = csvfile.readline().split('\t')
     for line in csvfile:
-        row = {}
-        part = line.split()
+        row = { }
+        part = line.split('\t')
         for i in range(1, len(header)):
-            row[header[i]] = part[i]
+            header[i] = header[i].strip()
+            row[header[i]] = part[i].strip() # unnützes Zeuchs lösch'n
         gamedata["translations"][part[0]] = row
-
+    # noch die Sprachen sammeln für Einstellungen
+    gamedata["translations"]["languages"] = []
+    for i in range(1, len(header)):
+        gamedata["translations"]["languages"].append(header[i])
+gamedata["logger"].info("Übersetzungen geladen")
 
 
 stdscr = curses.initscr()

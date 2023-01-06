@@ -28,6 +28,15 @@ class PageBasepage:
         curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
         curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
         curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+    def t(self, key): # !! douh !! die Erste
+        lang = self.config["user"]["language"]
+        if not key in self.gamedata["translations"]:
+            self.gamedata["logger"].error(f"Key '{key}' nicht gefunden")
+            return key
+        if not lang in self.gamedata["translations"][key]:
+            self.gamedata["logger"].error(f"Sprache '{lang}' für '{key}' nicht gefunden")
+            return lang
+        return self.gamedata["translations"][key][lang]
     def handleInput(self, key):
         #self.gamedata["logger"].warn("keine Überschreibung der Tasten für die aktuelle Page")
         pass
@@ -1281,6 +1290,7 @@ class PageFSS(PageBasepage):
 
 
 
+
 class PageSettings(PageBasepage):
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
@@ -1316,7 +1326,7 @@ class PageSettings(PageBasepage):
     def update(self):
         self.screen.clear()
         self.print(0, 2, self.arrowLeft + " ~yHOME~w/~yEND~w " + self.arrowRight + "  |")
-        self.print(21, 2, "~yCursor-Keys~w zur Auswahl der Option - oder - ~yEnter~w um Sonderfunktionen auszulösen")
+        self.print(21, 2, self.t("PAGE_SETTING_UNDERLINE"))
         pos = 17
         for i in range(0, len(self.pages)):
             page = self.pages[i]
@@ -1337,6 +1347,15 @@ class PageSettingsSubpage:
         self.arrowLeft = u"\u25C0"  # shortcut
         self.arrowRight = u"\u25B6"
         self.line = 0
+    def t(self, key): # !! douh !! die Zweite
+        lang = self.config["user"]["language"]
+        if not key in self.gamedata["translations"]:
+            self.gamedata["logger"].error(f"Key '{key}' nicht gefunden")
+            return key
+        if not lang in self.gamedata["translations"][key]:
+            self.gamedata["logger"].error(f"Sprache '{lang}' für '{key}' nicht gefunden")
+            return lang
+        return self.gamedata["translations"][key][lang]
     def handleInput(self, key):
         pass
     def update(self):
@@ -1384,22 +1403,23 @@ class PageSettingsMain(PageSettingsSubpage):
     def __init__(self, config, gamedata, basepage):
         super().__init__(config, gamedata, basepage)
     def getSubPageName(self):
-        return "Settings"
+        return self.t("PAGE_SETTINGS_MAIN_TABNAME")
     def getOptionCount(self):
-        return 11
+        return 12
     def update(self):
-        self.print(2, 5, "Allgemeine Einstellungen")
-        self.updateOptionLine(0, self.getOptionValueSelected(0), "Update der Sternensysteme")
-        self.updateOptionLine(1, self.getOptionValueSelected(1), "max. Entfernung der Systeme für Verkauf (Ly)")
-        self.updateOptionLine(2, self.getOptionValueSelected(2), "max. Entfernung der Stationen für Verkauf (Ls)")
-        self.updateOptionLine(3, self.getOptionValueSelected(3), "Carrier erlauben (bei Update + kein Prüfung auf Landeerlaubnis)")
-        self.updateOptionLine(4, self.getOptionValueSelected(4), "automatisch die Seiten umschalten")
-        self.updateOptionLine(5, self.getOptionValueSelected(5), "Seite nach dem Ende der Route")
-        self.updateOptionLine(6, self.getOptionValueSelected(6), "Farben in der Darstellung nutzen")
-        self.updateOptionLine(7, self.getOptionValueSelected(7), "Autostart von EDMarketConnector")
-        self.updateOptionLine(8, self.getOptionValueSelected(8), "Systeme weiter vom Heimatsystem, werden gelöscht/ignoriert (Ly)")
-        self.updateOptionLine(9, self.getOptionValueSelected(9), "Events anzeigen (Debug-Funktion)")
-        self.updateOptionLine(10, self.getOptionValueSelected(10), "VSS Seite nur bei manuellem Scan")
+        self.print(2, 5, self.t("PAGE_SETTINGS_MAIN_HEADLINE"))
+        self.updateOptionLine(0, self.getOptionValueSelected(0), self.t("PAGE_SETTINGS_MAIN_UPDATE"))
+        self.updateOptionLine(1, self.getOptionValueSelected(1), self.t("PAGE_SETTINGS_MAIN_SALE_SYSTEM"))
+        self.updateOptionLine(2, self.getOptionValueSelected(2), self.t("PAGE_SETTINGS_MAIN_SALE_STATIONS"))
+        self.updateOptionLine(3, self.getOptionValueSelected(3), self.t("PAGE_SETTINGS_MAIN_CARRIER"))
+        self.updateOptionLine(4, self.getOptionValueSelected(4), self.t("PAGE_SETTINGS_MAIN_AUTOPAGE"))
+        self.updateOptionLine(5, self.getOptionValueSelected(5), self.t("PAGE_SETTINGS_MAIN_PRIOPAGE"))
+        self.updateOptionLine(6, self.getOptionValueSelected(6), self.t("PAGE_SETTINGS_MAIN_COLORS"))
+        self.updateOptionLine(7, self.getOptionValueSelected(7), self.t("PAGE_SETTINGS_MAIN_EDMC"))
+        self.updateOptionLine(8, self.getOptionValueSelected(8), self.t("PAGE_SETTINGS_MAIN_BUBBLE"))
+        self.updateOptionLine(9, self.getOptionValueSelected(9), self.t("PAGE_SETTINGS_MAIN_EVENTS"))
+        self.updateOptionLine(10, self.getOptionValueSelected(10), self.t("PAGE_SETTINGS_MAIN_FSS"))
+        self.updateOptionLine(11, self.getOptionValueSelected(11), self.t("PAGE_SETTINGS_MAIN_LANG"))
     def getOptionValueSelected(self, line):
         if line == 0: return "update"
         if line == 1: return self.config["distances"]["systems"]
@@ -1412,6 +1432,7 @@ class PageSettingsMain(PageSettingsSubpage):
         if line == 8: return self.config["filter"]["distance"]
         if line == 9: return self.config["pages"]["events"]
         if line == 10: return self.config["pages"]["onlydetailed"]
+        if line == 11: return self.config["user"]["language"]
     def setOptionValueSelected(self, line, option):
         # Zeile 0 ist uninteressant
         if line == 1: self.config["distances"]["systems"] = str(option)
@@ -1424,6 +1445,7 @@ class PageSettingsMain(PageSettingsSubpage):
         if line == 8: self.config["filter"]["distance"] = str(option)
         if line == 9: self.config["pages"]["events"] = str(option)
         if line == 10: self.config["pages"]["onlydetailed"] = str(option)
+        if line == 11: self.config["user"]["language"] = str(option)
     def getOptionValuePossible(self, line):
         distances = [ 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000 ]
         if line == 0: return "update"
@@ -1437,6 +1459,7 @@ class PageSettingsMain(PageSettingsSubpage):
         if line == 8: return distances
         if line == 9: return [ "yes", "no" ]
         if line == 10: return [ "yes", "no" ]
+        if line == 11: return self.gamedata["translations"]["languages"]
     def chooseSpecialFunction(self, line):
         if line == 0: 
             self.config["pages"]["activepage"] = "U"
@@ -1445,13 +1468,14 @@ class PageSettingsServices(PageSettingsSubpage):
     def __init__(self, config, gamedata, basepage):
         super().__init__(config, gamedata, basepage)
     def getSubPageName(self):
-        return "Services"
+        return self.t("PAGE_SETTINGS_SERVICE_TABNAME")
     def getOptionCount(self):
         return 8
     def update(self):
-        self.print(2, 5, "Liste der Services in der Nähe")
+        self.print(2, 5, self.t("PAGE_SETTINGS_SERVICE_HEADER"))
         for i in range(0, self.getOptionCount()):
-            self.updateOptionLine(i, self.getOptionValueSelected(i), "Service Anzeige für Zeile " + str(i + 1))
+            output = self.t("PAGE_SETTINGS_SERVICE_OUTPUTLINE")
+            self.updateOptionLine(i, self.getOptionValueSelected(i), output.format(line = i + 1))
     def splitOptionsUsed(self):
         options = self.config["pages"]["services"].split(", ")
         # self.gamedata["logger"].info(str(len(options)) + " Anzahl an Optionen")
@@ -1463,8 +1487,6 @@ class PageSettingsServices(PageSettingsSubpage):
         return options
     def splitOptionsKnown(self):
         options = self.config["pages"]["services_known"].split(", ")
-#        for i in range(0, len(options)):
-#            self.gamedata["logger"].info(" - '" + options[i] + "'")
         return options
     def getOptionValueSelected(self, line):
         alloptions = self.getOptionValuePossible(line)
