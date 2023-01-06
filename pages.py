@@ -1386,7 +1386,7 @@ class PageSettingsMain(PageSettingsSubpage):
     def getSubPageName(self):
         return "Settings"
     def getOptionCount(self):
-        return 10
+        return 11
     def update(self):
         self.print(2, 5, "Allgemeine Einstellungen")
         self.updateOptionLine(0, self.getOptionValueSelected(0), "Update der Sternensysteme")
