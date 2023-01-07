@@ -43,3 +43,4 @@ PAGE_CARGO_MISSION_POSSIBLE	>> mögliche Fracht für eine Liefer-Mission	>> poss
 PAGE_CARGO_MISSION_UNKNOW	>> Fracht für eine unbekannte Mission	>> Cargo for an unknown mission
 PAGE_CARGO_MISSION_NAME	>> {name}	>> {name}
 PAGE_CARGO_DRONES	{count} Drohnen	{count} Drones
+PAGE_MODULES_EMPTY	es gibt keine gelagerten Schiffmodule	there are no stored ship modules

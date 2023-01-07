@@ -447,12 +447,10 @@ class PageCargo(PageBasepage):          # 1
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadCargo()
-
     def loadCargo(self):
         if not exists(self.config["eddir"]["path"] + "/Cargo.json"): return
         with open(self.config["eddir"]["path"] + "/Cargo.json", "r") as f:
             self.gamedata["cargo"] = json.load(f)["Inventory"]
-
     def update(self):
         self.cargouse = 0
         self.marge_total = 0
@@ -553,7 +551,7 @@ class PageCargo(PageBasepage):          # 1
         for i in range(0, int(percent)): temp[i] = "="     # auffüllen
         filler = "".join(temp)
         self.print(21, 2, "[{0}]".format(filler))
-        self.print(20, 2, self.t("PAGE_CARGO_DRONES").format(self.countDrones()))
+        self.print(20, 2, self.t("PAGE_CARGO_DRONES").format(count = self.countDrones()))
         self.print(20, 95, "{0:>3} / {1:>3}".format(self.cargomax - self.cargouse, self.cargomax))
         self.print(20, 35, "{0:^20}".format("{0:,}\u00A2 ".format(self.marge_total)))
 class PageRoute(PageBasepage):          # 2
@@ -785,12 +783,10 @@ class PageStoredModules(PageBasepage):  # 4
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadStoredModules()
-
     def loadStoredModules(self):
         if exists(self.config["localnames"]["modules"]):
             with open(self.config["localnames"]["modules"], "r") as f:
                 self.gamedata["stored"]["modules"] = json.load(f)
-
     def update(self):
         self.screen.clear()
         if len(self.gamedata["stored"]["modules"]) > 0:
@@ -798,10 +794,8 @@ class PageStoredModules(PageBasepage):  # 4
         else:
             self.update_clear()
         self.screen.refresh()
-
     def update_clear(self):
-        self.print(5, 10, "es gibt keine gelagerten Schiffmodule")
-
+        self.print(5, 10, self.t("PAGE_MODULES_EMPTY"))
     def update_modules(self):
         line = 0
         for module in self.gamedata["stored"]["modules"]:
