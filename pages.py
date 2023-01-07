@@ -44,26 +44,38 @@ class PageBasepage:
         #self.gamedata["logger"].warn("keine Überschreibung der aktuellen Page für Ausgabe")
         pass
     def print(self, posy, posx, content):
-        color_escape = False
+        internal_escape = False
         color_color = 0         #   -_-
         try:
             if len(content) > 0:
                 for i in range(0, len(content)):
                     char = content[i]
-                    if color_escape:
-                        if char == "w": color_color = 0
-                        if char == "b": color_color = 1
-                        if char == "r": color_color = 2
-                        if char == "g": color_color = 3
-                        if char == "y": color_color = 4
-                        color_escape = False
-                        continue
+                    if internal_escape:
+                        internal_escape = False
+                        if char == "w":
+                            color_color = 0
+                            continue
+                        if char == "b":
+                            color_color = 1
+                            continue
+                        if char == "r":
+                            color_color = 2
+                            continue
+                        if char == "g":
+                            color_color = 3
+                            continue
+                        if char == "y":
+                            color_color = 4
+                            continue
+                        # nur Farbcodierungen werden nicht ausgegeben
+                        if char == "C": char ='\u00A2'
+                        if char == "~": char = '~' # Escape des Escape
                     if char == "~":
-                        color_escape = True
+                        internal_escape = True
                         continue
                     if self.config["pages"]["coloring"] == "no": color_color = 0
                     if posx < curses.COLS - 1: self.screen.addstr(posy, posx, char, curses.color_pair(color_color))
-                    color_escape = False
+                    internal_escape = False
                     posx += 1
             else:
                 self.screen.addstr(posy, posx, "", curses.color_pair(0))
@@ -464,10 +476,10 @@ class PageCargo(PageBasepage):          # 1
         self.showCapacity()
         self.screen.refresh()
     def update_clear(self):
-        self.print(5, 10, "der Frachtraum ist zur Zeit leer")
+        self.print(5, 10, self.t("PAGE_CARGO_EMPTY"))
     def update_cargo(self):
         cargo = self.gamedata["cargo"]
-        self.print(10, 20, "... berechne Daten für aktuellen Cargo ...")
+        self.print(10, 20, self.t("PAGE_CARGO_CALC"))
         self.screen.refresh()
         self.screen.clear()
         playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
@@ -489,38 +501,47 @@ class PageCargo(PageBasepage):          # 1
                 systempos = [ float(station["coords"][0]), float(station["coords"][1]), float(station["coords"][2]) ]
                 distance = math.dist(playerpos, systempos)
                 cargo_marge = "{:,}".format(price * cargo_count)
-                line1 = "{0:>14}\u00A2   {1:3}  {2:30}".format(cargo_marge, cargo_count, getDictItem(item, "Name", "Name_Localised"))
+                line1 = self.t("PAGE_CARGO_LINE1_RAW").format(marge = cargo_marge, 
+                                                                count = cargo_count,
+                                                                name = getDictItem(item, "Name", "Name_Localised")
+                )
                 if not mission is None:
                     missionname = getDictItem(mission, "Name", "LocalisedName")
                     missionsystem = mission["DestinationSystem"]
-                    line2 = "{0:14}    {1:3}  >> Fracht für: {2} ({3})".format(" ", " ", missionname, missionsystem) # , maxdistance, cargo_system, cargo_market)
+                    line2 = self.t("PAGE_CARGO_MISSION_KNOWN").format(name = missionname, system = missionsystem)
                 else:
                     cargo_system = station["system"]
                     cargo_market = station["name"]
-                    line2 = "{0:14}    {1:3}  {2:4.1f}ly {3} ({4})".format(" ", " ", distance, cargo_system, cargo_market)
+                    line2 = self.t("PAGE_CARGO_BUYER").format(distance = distance,
+                                                                system = cargo_system,
+                                                                markete = cargo_market
+                    )
                 self.marge_total += price * cargo_count
             else:
-                line1 = "{0:>14}\u00A2   {1:3}  {2:30}".format(0, cargo_count, cargo_item)
+                line1 = self.t("PAGE_CARGO_LINE1_RAW").format(marge = 0, 
+                                                                count = cargo_count,
+                                                                name = getDictItem(item, "Name", "Name_Localised")
+                )
                 if not "MissionID" in item:
                     missionitem = False
                     for mission in self.gamedata["missions"]:
                         if "Commodity_Localised" in mission:
                             if mission["Commodity_Localised"].lower() == cargo_item.lower(): missionitem = True
                     if missionitem:
-                        line2 = "{0:14}    {1:3}  >> mögliche Fracht für eine Liefer-Mission".format(" ", " ") # , maxdistance, cargo_system, cargo_market)
+                        line2 = self.t("PAGE_CARGO_MISSION_POSSIBLE")
                     else:
-                        line2 = "{0:14}    {1:3}  innerhalb von {2:4.1f}ly nicht verkaufbar".format(" ", " ", float(self.config["distances"]["systems"]))
+                        line2 = self.t("PAGE_CARGO_NOBUYER").format(distance = float(self.config["distances"]["systems"]))
                 else:
                     mission = self.getMission(item["MissionID"])
                     if mission is None:
-                        line2 = "{0:14}    {1:3}  >> Fracht für eine unbekannte Mission".format(" ", " ")
+                        line2 = self.t("PAGE_CARGO_MISSION_UNKNOWN")
                     else:
-                        line2 = "{0:14}    {1:3}  >> {2}".format(" ", " ", mission["LocalisedName"])
+                        line2 = self.t("PAGE_CARGO_MISSION_NAME").format(name = mission["LocalisedName"])
             if item["Name"] == "drones":
                 self.limpetcount = cargo_count
                 continue # Drohnen müssen ausgeblendet werden
             self.print(itemnumber * 2 + 0, 5, line1)
-            self.print(itemnumber * 2 + 1, 5, line2)
+            self.print(itemnumber * 2 + 1, 28, line2)
             itemnumber += 1
             self.screen.refresh()
     def showCapacity(self):
@@ -531,9 +552,8 @@ class PageCargo(PageBasepage):          # 1
         temp = list(filler)
         for i in range(0, int(percent)): temp[i] = "="     # auffüllen
         filler = "".join(temp)
-        #output = "{0:>3} Drohnen [{1}] {2:>3}/{3:>3}".format(self.limpetcount, filler, self.cargouse, self.cargomax)
         self.print(21, 2, "[{0}]".format(filler))
-        self.print(20, 2, "{0} Drohnen".format(self.countDrones()))
+        self.print(20, 2, self.t("PAGE_CARGO_DRONES").format(self.countDrones()))
         self.print(20, 95, "{0:>3} / {1:>3}".format(self.cargomax - self.cargouse, self.cargomax))
         self.print(20, 35, "{0:^20}".format("{0:,}\u00A2 ".format(self.marge_total)))
 class PageRoute(PageBasepage):          # 2

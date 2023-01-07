@@ -33,3 +33,13 @@ PAGE_ROUTE_JUMPCOUNT	noch {count} Sprünge	still {count} jumps
 PAGE_ROUTE_ITINERAY	(~yR~w) Reiseroute: {distance}ly total	(~yR~w) Itinerary: {distance}ly total
 PAGE_ROUTE_SERVICES_LINE1	~g{service}~w in ~g{stationsystem}~w	~g{service}~w to ~g{stationsystem}~w
 PAGE_ROUTE_SERVICES_LINE2	{distance:.1f}ly bei {stationname}	{distance:.1f}ly at {stationname}
+PAGE_CARGO_EMPTY	der Frachtraum ist zur Zeit leer	the hold is currently empty
+PAGE_CARGO_CALC	... berechne Daten für aktuellen Cargo ...	... calculate data for current cargo ...
+PAGE_CARGO_LINE1_RAW	{marge:>14}~C   {count:3}  {name:30}	{marge:>14}~C   {count:3}  {name:30}
+PAGE_CARGO_NOBUYER	innerhalb von {distance:4.1f}ly nicht verkaufbar	not sellable within {distance:4.1f}ly
+PAGE_CARGO_MISSION_KNOWN	>> Fracht für: {name} ({system})	>> Cargo for: {name} ({system})
+PAGE_CARGO_BUYER	{distance:4.1f}ly {system} ({market})	{distance:4.1f}ly {system} ({market})
+PAGE_CARGO_MISSION_POSSIBLE	>> mögliche Fracht für eine Liefer-Mission	>> possible cargo for a delivery mission
+PAGE_CARGO_MISSION_UNKNOW	>> Fracht für eine unbekannte Mission	>> Cargo for an unknown mission
+PAGE_CARGO_MISSION_NAME	>> {name}	>> {name}
+PAGE_CARGO_DRONES	{count} Drohnen	{count} Drones
