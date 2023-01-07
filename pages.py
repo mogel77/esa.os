@@ -1015,18 +1015,14 @@ class PageAsteroid(PageBasepage):       # 8
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadAsteroid()
-
     def loadAsteroid(self):
         if exists(self.config["localnames"]["asteroid"]):
             with open(self.config["localnames"]["asteroid"], "r") as f:
                 self.gamedata["asteroid"] = json.load(f)
-
-
     def getPrice(self, market, commodities):
         for c in market["commodities"]:
             if c["name"] == commodities: return int(c["sellPrice"])
         return 0
-
     def update(self):
         self.screen.clear()
         self.screen.refresh()
@@ -1038,31 +1034,31 @@ class PageAsteroid(PageBasepage):       # 8
         else:
             self.update_clear()
         self.screen.refresh()
-
     def update_clear(self):
-        self.print(5, 10, "kein Asteroid gescannt")
-
+        self.print(5, 10, self.t("PAGE_ASTEROID_EMPTY"))
     def update_asteroid(self):
         # Kern
+        output = self.t("PAGE_ASTEROID_CORE")
+        self.print(2, 20 - len(output), output)
         if "MotherlodeMaterial" in self.gamedata["asteroid"]:
             name = getDictItem(self.gamedata["asteroid"], "MotherlodeMaterial", "MotherlodeMaterial_Localised")
-            self.print(2, 5, "          Kern: {0}".format(name))
+            self.print(2, 21, name)
         else:
-            self.print(2, 5, "kein Kern gefunden")
-
+            self.print(2, 5, self.t("PAGE_ASTEROID_NOCORE"))
         # Menge
         content = getDictItem(self.gamedata["asteroid"], "Content", "Content_Localised")
         remain = getDictItem(self.gamedata["asteroid"], "Remaining")
-        self.print(4, 5, "{0}".format(content, remain))
-        self.print(5, 15, "Rest: {0:.1f}%".format(remain))
-
+        index = content.index(':')
+        self.print(4, 19 - index, content)
+        output = self.t("PAGE_ASTEROID_REST")
+        self.print(5, 20 - len(output), output)
+        self.print(5, 21, "{0:.1f}%".format(remain))
         # Rest
         line = 0
         playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
         for material in self.gamedata["asteroid"]["Materials"]:
             name = getDictItem(material, "Name", "Name_Localised")
             percent = material["Proportion"]
-
             market = None
             maxdistance = 0
             price = 0
@@ -1085,9 +1081,15 @@ class PageAsteroid(PageBasepage):       # 8
                             price = neu
             output = ""
             if market is None:
-                output = "{0:>5.1f}% {1:25} - kein Markt gefunden".format(percent, name)
+                output = self.t("PAGE_ASTEROID_NOMARKET").format(percent = percent, name = name)
+                # -- output = "{0:>5.1f}% {1:25} - kein Markt gefunden".format(percent, name)
             else:
-                output = "{0:>5.1f}% {1:25} - {2:>10,}\u00A2  ({3:4.1f}ly {4}|{5})".format(percent, name, price, maxdistance, market["system"], market["name"])
+                output = self.t("PAGE_ASTEROID_MARKET").format(percent = percent,
+                                                                name = name,
+                                                                price = price,
+                                                                distance = maxdistance,
+                                                                system = market["system"],
+                                                                market = market["name"])
             self.print(8 + line, 5, output)
             line += 1
             self.screen.refresh() # nach jeder Zeile - das suchen der preise dauert immer etwas
@@ -1120,12 +1122,12 @@ class PageFSS(PageBasepage):
         additional = ""
         if self.gamedata["fss"]["completed"] == True or self.gamedata["fss"]["count"] > 0:
             if self.gamedata["fss"]["completed"] == True:
-                additional = " - vollständig"
+                self.t("PAGE_FSS_HEADLINE_COMPLETED")
             else:
                 total = self.gamedata["fss"]["count"]
                 found = len(self.gamedata["fss"]["planets"])
-                additional = " - gescannt {0} von {1} Planeten".format(found, total)
-        self.print(0, 2, "Voll Spektrum Scanner für ~g{0}~w{1}".format(self.gamedata["system"]["name"], additional))
+                additional = self.t("PAGE_FSS_HEADLIN_SCANNED").format(found = found, total = total)
+        self.print(0, 2, self.t("PAGE_FSS_HEADLINE").format(system = self.gamedata["system"]["name"], additional = additional))
         self.sortPlanets()
         self.showPlanets()
         sortierung = ""
@@ -1134,7 +1136,8 @@ class PageFSS(PageBasepage):
         else:
             sortierung = "Down"
         sortierung = "(~g" + sortierung + "~w[~yR~w])"
-        self.print(21, 2, "Cursor ~yUp/Down~w zum Scrollen~w - ~yLeft/Right~w für Sortierung: ~g" + self.sortmode.name + "~w " + sortierung + " - [~yM~w] Materialien")
+        output = self.t("PAGE_FSS_FOOTER").format(sortmode = self.sortmode.name, direction = sortierung)
+        self.print(21, 2, output)
         self.screen.refresh()
     def handleInput(self, key):
         if key == curses.KEY_UP and self.starting > 0:

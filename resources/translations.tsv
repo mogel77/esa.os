@@ -66,3 +66,13 @@ PAGE_SAA_EMPTY	keine Signale gefunden	no signals found
 PAGE_SAA_HEADLINE	letzter Scan von ~g{name}~w	last scan of ~g{name}~w
 PAGE_SAA_NOMARKET	{name:>20} {count:>2}x - kein Markt gefunden	{name:>20} {count:>2}x - no market found
 PAGE_SAA_MARKET	{name:>20} {count:>2}x - {price:>10,}~C  ({distance:4.1f}ly {system}|{market})	{name:>20} {count:>2}x - {price:>10.}~C ({distance:4.1f}ly {system}|{market})
+PAGE_ASTEROID_EMPTY	kein Asteroid gescannt	no asteroid scanned
+PAGE_ASTEROID_CORE	Kern:	Core:
+PAGE_ASTEROID_NOCORE	keinen Kern gefunden	no core found
+PAGE_ASTEROID_REST	Rest:	Remain:
+PAGE_ASTEROID_NOMARKET	{percent:>5.1f}% {name:25} - kein Markt gefunden	{percent:>5.1f}% {name:25} - no market found
+PAGE_ASTEROID_MARKET	{percent:>5.1f}% {name:25} - {price:>10,}~C  ({distance:4.1f}ly {system}|{market})	{percent:>5.1f}% {name:25} - {price:>10,}~C  ({distance:4.1f}ly {system}|{market})
+PAGE_FSS_HEADLINE	Voll Spektrum Scanner für ~g{system}~w {additional}	Full spectrum scanner for ~g{system}~w {additional}
+PAGE_FSS_HEADLINE_COMPLETED	- vollständig	- completely
+PAGE_FSS_HEADLINE_SCANNED	- gescannt {found} von {total} Planeten	- scanned {found} of {total} planets
+PAGE_FSS_FOOTER	Cursor [~yUp/Down~w] zum Scrollen~w - [~yLeft/Right~w] für Sortierung: ~g{sortmode}~w {direction} - [~yM~w] Materialien	Cursor [~yUp/Down~w] for scrolling~w - [~yLeft/Right~w] for sorting: ~g{sortmode}~w {direction} - [~yM~w] materials
