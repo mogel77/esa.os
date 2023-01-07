@@ -557,7 +557,7 @@ class PageRoute(PageBasepage):          # 2
         self.showServices()
         self.screen.refresh()
     def update_clear(self):
-        self.print(5, 5, "es ist im Moment keine Reise geplant")
+        self.print(5, 5, self.t("PAGE_ROUTE_NOROUTE"))
     def update_route(self):
         route = self.gamedata["route"]
         fuelstar = "KGBMOFA" # Sterne zum Tanken
@@ -582,7 +582,8 @@ class PageRoute(PageBasepage):          # 2
                 if system["StarClass"][0] == "D": startype = "*"
                 self.print(position, 5, "{2}   {0:6.1f}ly   {1}".format(distance, name, startype))
             else:
-                self.print(18, 5, "{0:8} {1}   noch {2} Sprünge".format(" ", "...", len(route) - self.routestep - 1))
+                output = self.t("PAGE_ROUTE_JUMPCOUNT")
+                self.print(18, 20, output.format(count = (len(route) - self.routestep - 1)))
             oldpos = system["StarPos"]
             self.disttotal += distance
             position += 1           # Position für die Ausgabe
@@ -625,13 +626,22 @@ class PageRoute(PageBasepage):          # 2
             if station is None: continue
             systempos = [ float(station["coords"][0]), float(station["coords"][1]), float(station["coords"][2]) ]
             distance = math.dist(playerpos, systempos)
-            self.print(2 * line + 0, 50, "~g{0}~w in ~g{1}~w".format(service, station["system"]))
-            self.print(2 * line + 1, 50, "   {0:.1f}ly bei {1}".format(distance, station["name"]))
+            
+            line1 = self.t("PAGE_ROUTE_SERVICES_LINE1").format(service = service,
+                                                                stationsystem = station["system"],
+                                                                distance = distance,
+                                                                stationname = station["name"])
+            line2 = self.t("PAGE_ROUTE_SERVICES_LINE2").format(service = service,
+                                                                stationsystem = station["system"],
+                                                                distance = distance,
+                                                                stationname = station["name"])
+            self.print(2 * line + 0, 50, line1)
+            self.print(2 * line + 1, 53, line2)
             line = line + 1
             if line > 11: break
     def showTravel(self):
-        travel = "(~yR~w) Reiseroute: {0}ly total".format(self.config["user"]["travel"])
-        self.print(18, 68, "{0:>40}".format(travel))
+        output = self.t("PAGE_ROUTE_ITINERAY").format(distance = format(self.config["user"]["travel"]))
+        self.print(18, 108 - len(output), output)
     def handleInput(self, key):
         if key == "r" or key == "R":
             self.config["user"]["travel"] = "0"

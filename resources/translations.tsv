@@ -28,3 +28,8 @@ PAGE_SETTINGS_SERVICE_TABNAME	Services	Services
 PAGE_SETTINGS_SERVICE_HEADER	Liste der Services in der Nähe	List of services nearby
 PAGE_SETTINGS_SERVICE_OUTPUTLINE	Service Anzeige für Zeile {line}	Service display for line {line}
 PAGE_SETTING_UNDERLINE	[~yCursor-Keys~w] zur Auswahl der Option - oder - [~yEnter~w] um Sonderfunktionen auszulösen	[~yCursor-Keys~w] to select option - or - [~yEnter~w] to trigger special functions
+PAGE_ROUTE_NOROUTE	es ist im Moment keine Reise geplant	no trip is planned at the moment
+PAGE_ROUTE_JUMPCOUNT	noch {count} Sprünge	still {count} jumps
+PAGE_ROUTE_ITINERAY	(~yR~w) Reiseroute: {distance}ly total	(~yR~w) Itinerary: {distance}ly total
+PAGE_ROUTE_SERVICES_LINE1	~g{service}~w in ~g{stationsystem}~w	~g{service}~w to ~g{stationsystem}~w
+PAGE_ROUTE_SERVICES_LINE2	{distance:.1f}ly bei {stationname}	{distance:.1f}ly at {stationname}
