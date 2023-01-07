@@ -44,3 +44,6 @@ PAGE_CARGO_MISSION_UNKNOW	>> Fracht für eine unbekannte Mission	>> Cargo for an
 PAGE_CARGO_MISSION_NAME	>> {name}	>> {name}
 PAGE_CARGO_DRONES	{count} Drohnen	{count} Drones
 PAGE_MODULES_EMPTY	es gibt keine gelagerten Schiffmodule	there are no stored ship modules
+PAGE_MODULES_STATUS_TRANSIT	{spc_cost:>10}   {name:<40} {spc_exp:9} {system}	{spc_cost:>10}   {name:<40} {spc_exp:9} {system}
+PAGE_MODULES_STATUS_SYSTEM	{cost:>10,}~C  {name:<40} {expired:9} {system}	{cost:>10}~C  {name:<40} {expired:9} {system}
+PAGE_MODULES_EXPIRED	{hour:02}:{minute:02}:{second:02}	{hour:02}:{minute:02}:{second:02}

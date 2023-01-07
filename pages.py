@@ -802,7 +802,13 @@ class PageStoredModules(PageBasepage):  # 4
             name = module["Name_Localised"]
             output = name
             if "InTransit" in module:
-                output = "{0:>10}   {1:<40} {2}".format("---", name, "- In Transit -")
+                cost = "---"
+                expired = ""
+                place = "- in Transit -"
+                output = self.t("PAGE_MODULES_STATUS_TRANSIT").format(spc_cost = cost,
+                                                                name = name,
+                                                                spc_exp = expired,
+                                                                system = place)
             else:
                 time = module["TransferTime"]
                 place = module["StarSystem"]
@@ -811,20 +817,21 @@ class PageStoredModules(PageBasepage):  # 4
                 time = time - (hours * 3600)
                 minutes = time // 60
                 seconds = time - (minutes * 60)
-                expired = "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
-                output = "{0:>10,}\u00A2  {1:<40} {2:9} {3}".format(cost, name, expired, place)
+                expired = self.t("PAGE_MODULES_EXPIRED").format(hour = hours, minute = minutes, second = seconds)
+                output = self.t("PAGE_MODULES_STATUS_SYSTEM").format(cost = cost,
+                                                                name = name,
+                                                                expired = expired,
+                                                                system = place)
             self.print(line, 2, output)
             line += 1
 class PageShipHangar(PageBasepage):     # 5
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadStoredShips()
-
     def loadStoredShips(self):
         if exists(self.config["localnames"]["hangar"]):
             with open(self.config["localnames"]["hangar"], "r") as f:
                 self.gamedata["stored"]["ships"] = json.load(f)
-
     def update(self):
         self.screen.clear()
         if len(self.gamedata["stored"]["ships"]) > 0:
@@ -832,10 +839,8 @@ class PageShipHangar(PageBasepage):     # 5
         else:
             self.update_clear()
         self.screen.refresh()
-
     def update_clear(self):
         self.print(5, 10, "es gibt keine gelagerten Schiff")
-
     def update_modules(self):
         line = 0
         self.print(0, 2, "{0:>14}     {1:<40} {2}".format("Wert", "Name / Transfer" , "Typ"))
