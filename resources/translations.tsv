@@ -62,3 +62,7 @@ PAGE_OUTFIT_BASIS	Intern	Intern
 PAGE_OUTFIT_WEAPON	Waffen	Weapons
 PAGE_OUTFIT_ADDON	Interieur	Interior
 PAGE_OUTFIT_TOOLS	Werkzeuge	Tools
+PAGE_SAA_EMPTY	keine Signale gefunden	no signals found
+PAGE_SAA_HEADLINE	letzter Scan von ~g{name}~w	last scan of ~g{name}~w
+PAGE_SAA_NOMARKET	{name:>20} {count:>2}x - kein Markt gefunden	{name:>20} {count:>2}x - no market found
+PAGE_SAA_MARKET	{name:>20} {count:>2}x - {price:>10,}~C  ({distance:4.1f}ly {system}|{market})	{name:>20} {count:>2}x - {price:>10.}~C ({distance:4.1f}ly {system}|{market})

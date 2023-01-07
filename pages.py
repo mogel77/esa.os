@@ -950,18 +950,14 @@ class PageSAASignals(PageBasepage):     # 7
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadSignals()
-
     def loadSignals(self):
         if exists(self.config["localnames"]["saasignals"]):
             with open(self.config["localnames"]["saasignals"], "r") as f:
                 self.gamedata["saasignals"] = json.load(f)
-
-
     def getPrice(self, market, commodities):
         for c in market["commodities"]:
             if c["name"] == commodities: return int(c["sellPrice"])
         return 0
-
     def update(self):
         self.screen.clear()
         if not "Signals" in self.gamedata["saasignals"]:
@@ -972,12 +968,10 @@ class PageSAASignals(PageBasepage):     # 7
             else:
                 self.update_clear()
         self.screen.refresh()
-
     def update_clear(self):
-        self.print(5, 10, "keine Signale gefunden")
-
+        self.print(5, 10, self.t("PAGE_SAA_EMPTY"))
     def update_signals(self):
-        self.print(2, 4, "letzter Scan von Planet " + self.gamedata["saasignals"]["BodyName"])
+        self.print(2, 4, self.t("PAGE_SAA_HEADLINE").format(name = self.gamedata["saasignals"]["BodyName"]))
         self.screen.refresh()
         playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
         line = 0
@@ -1006,9 +1000,14 @@ class PageSAASignals(PageBasepage):     # 7
                             price = neu
             output = ""
             if market is None:
-                output = "{1:>20} {0:>2}x - kein Markt gefunden".format(count, name)
+                output = self.t("PAGE_SAA_NOMARKET").format(count = count, name = name)
             else:
-                output = "{1:>20} {0:>2}x - {2:>10,}\u00A2  ({3:4.1f}ly {4}|{5})".format(count, name, price, maxdistance, market["system"], market["name"])
+                output = self.t("PAGE_SAA_MARKET").format(count = count,
+                                                            name = name,
+                                                            price = price,
+                                                            distance = maxdistance,
+                                                            system = market["system"],
+                                                            market = market["name"])
             self.print(4 + line, 5, output)
             line += 1
             self.screen.refresh() # nach jeder Zeile - das suchen der preise dauert immer etwas
