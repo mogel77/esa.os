@@ -47,3 +47,13 @@ PAGE_MODULES_EMPTY	es gibt keine gelagerten Schiffmodule	there are no stored shi
 PAGE_MODULES_STATUS_TRANSIT	{spc_cost:>10}   {name:<40} {spc_exp:9} {system}	{spc_cost:>10}   {name:<40} {spc_exp:9} {system}
 PAGE_MODULES_STATUS_SYSTEM	{cost:>10,}~C  {name:<40} {expired:9} {system}	{cost:>10}~C  {name:<40} {expired:9} {system}
 PAGE_MODULES_EXPIRED	{hour:02}:{minute:02}:{second:02}	{hour:02}:{minute:02}:{second:02}
+PAGE_HANGAR_EMPTY	es gibt keine gelagerten Schiff	there is no stored ship
+PAGE_HANGAR_HEADLINE	{value:>14}     {name:<40} {type}	{value:>14}     {name:<40} {type}
+PAGE_HANGAR_HEADLINE_VALUE	Wert	Price
+PAGE_HANGAR_HEADLINE_NAME	Name / Transit	Name / Transit
+PAGE_HANGAR_HEADLINE_TYPE	Typ	Type
+PAGE_HANGAR_EXPIRED	{hour:02}:{minute:02}:{second:02}	{hour:02}:{minute:02}:{second:02}
+PAGE_HANGAR_LINE1	{value:>14,}~C    {name:<40} {type}	{value:>14,}~C    {name:<40} {type}
+PAGE_HANGAR_LINE2_TRANSIT	- in Transit -	- in transit -
+PAGE_HANGAR_LINE2_REMOTE	Transfer: ~g{expired:8}~w von {system} für ~g{cost:,}~C~w	Transfer: ~g{expired:8}~w from {system} for ~g{cost:,}~C~w
+PAGE_HANGAR_LINE2_LOCAL	im lokalem Hanger ({system}) gelagert	stored in the local hanger ({system}).

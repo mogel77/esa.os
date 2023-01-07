@@ -840,20 +840,24 @@ class PageShipHangar(PageBasepage):     # 5
             self.update_clear()
         self.screen.refresh()
     def update_clear(self):
-        self.print(5, 10, "es gibt keine gelagerten Schiff")
+        self.print(5, 10, self.t("PAGE_HANGAR_EMPTY"))
     def update_modules(self):
         line = 0
-        self.print(0, 2, "{0:>14}     {1:<40} {2}".format("Wert", "Name / Transfer" , "Typ"))
+        header = self.t("PAGE_HANGAR_HEADLINE").format(value = self.t("PAGE_HANGAR_HEADLINE_VALUE"),
+                                                        name = self.t("PAGE_HANGAR_HEADLINE_NAME"),
+                                                        type = self.t("PAGE_HANGAR_HEADLINE_TYPE")
+                                                        )
+        self.print(0, 2, header)
         for ship in self.gamedata["stored"]["ships"]:
             type = getDictItem(ship, "ShipType", "ShipType_Localised")
             name = type # pauschal
             if "Name" in ship: name = ship["Name"]
             value = getDictItem(ship, "Value")
             hot = getDictItem(ship, "Hot")
-            output1 = "{0:>14,}\u00A2    {1:<40} {2}".format(value, name, type)
+            output1 = self.t("PAGE_HANGAR_LINE1").format(value = value, name = name, type = type)
             output2 = ""
             if "InTransit" in ship:
-                output2 = "{0:>14}     {1:<40}".format("", "- In Transit -")
+                output2 = self.t("PAGE_HANGAR_LINE2_TRANSIT")
             else:
                 place = ship["StarSystem"]
                 if "TransferTime" in ship:
@@ -863,13 +867,13 @@ class PageShipHangar(PageBasepage):     # 5
                     time = time - (hours * 3600)
                     minutes = time // 60
                     seconds = time - (minutes * 60)
-                    expired = "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
-                    output2 = "{0:>14}     Transfer: {2:8} von {3} für {1:,}\u00A2 ".format("", cost, expired, place)
-                    if time == 0: output2 = "{0:>14}     im lokalem Hanger ({1}) gelagert".format("", place)
+                    expired = self.t("PAGE_HANGAR_EXPIRED").format(hour = hours, minute = minutes, second = seconds)
+                    output2 = self.t("PAGE_HANGAR_LINE2_REMOTE").format(cost = cost, expired = expired, system = place)
+                    if time == 0: output2 = self.t("PAGE_HANGAR_LINE2_LOCAL").format(system = place)
                 else:
-                    output2 = ""
+                    output2 = self.t("PAGE_HANGAR_LINE2_SOMEWHERE")
             self.print(line * 2 + 2, 2, output1)
-            self.print(line * 2 + 3, 2, output2)
+            self.print(line * 2 + 3, 21, output2)
             line += 1
 class PageShipOutfit(PageBasepage):     # 6
     def __init__(self, config, gamedata):
