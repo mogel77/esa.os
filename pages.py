@@ -512,7 +512,7 @@ class PageCargo(PageBasepage):          # 1
                     cargo_market = station["name"]
                     line2 = self.t("PAGE_CARGO_BUYER").format(distance = distance,
                                                                 system = cargo_system,
-                                                                markete = cargo_market
+                                                                market = cargo_market
                     )
                 self.marge_total += price * cargo_count
             else:
@@ -1122,11 +1122,11 @@ class PageFSS(PageBasepage):
         additional = ""
         if self.gamedata["fss"]["completed"] == True or self.gamedata["fss"]["count"] > 0:
             if self.gamedata["fss"]["completed"] == True:
-                self.t("PAGE_FSS_HEADLINE_COMPLETED")
+                additional = self.t("PAGE_FSS_HEADLINE_COMPLETED")
             else:
                 total = self.gamedata["fss"]["count"]
                 found = len(self.gamedata["fss"]["planets"])
-                additional = self.t("PAGE_FSS_HEADLIN_SCANNED").format(found = found, total = total)
+                additional = self.t("PAGE_FSS_HEADLINE_SCANNED").format(found = found, total = total)
         self.print(0, 2, self.t("PAGE_FSS_HEADLINE").format(system = self.gamedata["system"]["name"], additional = additional))
         self.sortPlanets()
         self.showPlanets()
