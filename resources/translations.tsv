@@ -57,3 +57,8 @@ PAGE_HANGAR_LINE1	{value:>14,}~C    {name:<40} {type}	{value:>14,}~C    {name:<4
 PAGE_HANGAR_LINE2_TRANSIT	- in Transit -	- in transit -
 PAGE_HANGAR_LINE2_REMOTE	Transfer: ~g{expired:8}~w von {system} für ~g{cost:,}~C~w	Transfer: ~g{expired:8}~w from {system} for ~g{cost:,}~C~w
 PAGE_HANGAR_LINE2_LOCAL	im lokalem Hanger ({system}) gelagert	stored in the local hanger ({system}).
+PAGE_HANGAR_LINE2_SOMEWHERE	irgendwo in den Tiefen der Galaxie	somewhere in the depths of the galaxy
+PAGE_OUTFIT_BASIS	Intern	Intern
+PAGE_OUTFIT_WEAPON	Waffen	Weapons
+PAGE_OUTFIT_ADDON	Interieur	Interior
+PAGE_OUTFIT_TOOLS	Werkzeuge	Tools

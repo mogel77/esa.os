@@ -942,10 +942,10 @@ class PageShipOutfit(PageBasepage):     # 6
         slots["internals"] = []
         slots["options"] = []
         sortSlots()
-        printSlot(0, 2, "Internals", slots["internals"])
-        printSlot(12, 2, "Waffen", slots["weapons"])
-        printSlot(0, 35, "Zusätzliches", slots["options"])
-        printSlot(0, 70, "Werkzeuge", slots["tools"])
+        printSlot(0, 2, self.t("PAGE_OUTFIT_BASIS"), slots["internals"])
+        printSlot(12, 2, self.t("PAGE_OUTFIT_WEAPON"), slots["weapons"])
+        printSlot(0, 35, self.t("PAGE_OUTFIT_ADDON"), slots["options"])
+        printSlot(0, 70, self.t("PAGE_OUTFIT_TOOLS"), slots["tools"])
 class PageSAASignals(PageBasepage):     # 7
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
