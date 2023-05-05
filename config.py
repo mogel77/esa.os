@@ -45,8 +45,8 @@ def updateConfig():
     checkEntry('eddir', 'edmc', '../EDMarketConnector')
 
     # Download URLS
-    # checkEntry('urls', 'commodities', 'https://edgalaxydata.space/EDDB/dumps/commodities.json')
-    checkEntry('urls', 'galaxy_gz', 'https://downloads.spansh.co.uk/galaxy_1day.json.gz')
+    # -- old -- checkEntry('urls', 'galaxy_gz', 'https://downloads.spansh.co.uk/galaxy_1day.json.gz')
+    checkEntry('urls', 'galaxy_gz', 'https://downloads.spansh.co.uk/galaxy_stations.json.gz')
 
     # Dateinamen nach dem Download bzw. zum Speichern der Daten
     checkEntry('localnames', 'stations', 'daten/stations.json')

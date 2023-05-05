@@ -30,6 +30,8 @@ config.read('config.ini')
 
 # zusätzliche Dinge zur Laufzeit
 gamedata = {}
+gamedata["hack"] = {}                       # !! DOUH !!
+gamedata["hack"]["windows"] = {}            # !! DOUH !!
 gamedata["stations"] = []                   # alle bekannten Stationen
 gamedata["modnames"] = []                   # alle Module
 gamedata["cargo"] = []                      # Frachtraum
@@ -811,11 +813,17 @@ def startEDMC():
 
 def prepareVersion():
     global config, gamedata
-    VERSION_NEED = "3"
-    if not config["esaos"]["version"] == VERSION_NEED:
+    VERSION_REQUIRED = "4"
+    VERSION_CURRENT = config["esaos"]["version"]
+    if not VERSION_CURRENT == VERSION_REQUIRED:
         gamedata["logger"].info("Version stimmt nicht - lösche alte Files")
-        if os.path.exists(config["localnames"]["stations"]): os.remove(config["localnames"]["stations"])
-        config["esaos"]["version"] = VERSION_NEED
+        if VERSION_CURRENT == "2":
+            gamedata["logger"].info(" - lösche alte Stations Daten")
+            if os.path.exists(config["localnames"]["stations"]): os.remove(config["localnames"]["stations"])
+        if VERSION_CURRENT == "3":
+            gamedata["logger"].info(" - lösche alte URL für Stations Daten")
+            config["urls"]["galaxy_gz"] = "https://downloads.spansh.co.uk/galaxy_stations.json.gz"
+        config["esaos"]["version"] = VERSION_REQUIRED
         tools.saveConfig(config, gamedata)
 def main(stdsrc):
     global winheader, winmenu, winevents, winstatus
@@ -844,6 +852,9 @@ def main(stdsrc):
     pagefss = pages.PageFSS(config, gamedata)
     pageManager.lastNumber  = "?"
     pageManager.currentPage = pagecargo # pauschal
+
+    gamedata["hack"]["windows"]["status"] = winstatus
+    gamedata["hack"]["windows"]["menu"] = winmenu
 
     pageloading.update()
     if os.path.exists(config["localnames"]["stations"]):

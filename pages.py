@@ -7,7 +7,7 @@ import math
 import json
 import time
 import random
-import sys
+import threading
 from os.path import exists
 from datetime import datetime
 from enum import Enum
@@ -283,31 +283,68 @@ class PageDownloads(PageBasepage):      # U
                 "",
                 "(BTW: es ist Zeit für einen Kaffee)"
             ]
+    status = [ "", "", "", "" ]
+    updating = 0
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
-
+    def update(self):
+        self.gamedata["stations"] = []
+        self.screen.clear()
+        for i in range(0, len(self.uds)): self.print(i + 2, 5, self.uds[i])
+        if not self.updating == 0:
+            self.print(13, 5, ">>> ein Update läuft bereits")
+        else:
+            self.statusClear()
+            self.updating = 1
+            updateThread = threading.Thread(target=self.initDownloadThread)
+            updateThread.start()
+            self.print(13, 5, ">>> Update wurde gestartet")
+        self.screen.refresh()
+    def statusClear(self):
+        self.status[0] = "Update der Sternensysteme"
+        self.status[1] = ""
+        self.status[2] = ""
+        self.status[3] = ""
+    def statusPrint(self, line, msg):
+        self.status[line] = msg
+        for i in range(0, 4):
+            self.gamedata["status"][i] = self.status[i]
+        self.gamedata["hack"]["windows"]["status"].update()
+        self.gamedata["hack"]["windows"]["menu"].update()
     def download(self, key):
+        self.gamedata["logger"].info("Download Key -> " + key);
+        last = 0
         url = self.config["urls"][key]
         name = self.config["localnames"][key]
-        headers = { "User-Agent" : "Github / ESA.OS (Elite Ship Assistant)" }
-        r = requests.get(url, allow_redirects=True, headers=headers)
-        open(name, 'wb').write(r.content)
-
-    def printline(self, y, x, text):
-        self.print(y, x, text)
-        self.print(y + 1, x, "> ")
-        self.screen.refresh()
-
+        with open(name, 'wb') as f:
+            headers = { "User-Agent" : "Github / ESA.OS (Elite Ship Assistant)" }
+            response = requests.get(url, allow_redirects=True, headers=headers, stream=True)
+            total_length = response.headers.get('content-length')
+            if total_length is None: # no content length header
+                self.gamedata["logger"].info("keine Header für Content gefunden");
+                f.write(response.content)
+            else:
+                dl = 0
+                total_length = int(total_length)
+                self.gamedata["logger"].info("download von gesamt {0} Bytes".format(total_length));
+                for data in response.iter_content(chunk_size=8192):
+                    dl += len(data)
+                    f.write(data)
+                    done = int(10 * dl / total_length)
+                    if done != last:
+                        last = done
+                        self.statusPrint(1, "[>] download {0}0%".format(done))
     def downloadAndClip(self):
         # download
+        self.statusPrint(1, "[>] download " + self.config["urls"]["galaxy_gz"])
         self.download("galaxy_gz")
         # auspacken
-        self.printline(14, 5, "> gzip -u galaxy.gz")
+        self.statusPrint(1, "[>] unzip " + self.config["localnames"]["galaxy_gz"])
         with gzip.open(self.config["localnames"]["galaxy_gz"], 'rb') as f_in:
             with open(self.config["localnames"]["galaxy_json"], 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
         # manuell wandeln von JSON nach JSONL
-        self.printline(15, 5, "> split galaxy.json -format jsonl")
+        self.statusPrint(1, "[>] convert " + self.config["localnames"]["galaxy_json"])
         with open(self.config["localnames"]["galaxy_json"], 'rb+') as file:
             file.seek(0, 0)
             # Klammer '[' am Anfang löschen - davon ausgehend das kein BOM
@@ -350,17 +387,13 @@ class PageDownloads(PageBasepage):      # U
                 if clipcounter < 0:
                     #print(f'tja, schief gelaufen bei Position {position}')
                     break
-
-    def update(self):
-        self.gamedata["stations"] = []
-        self.screen.clear()
-        for i in range(0, len(self.uds)): self.print(i + 2, 5, self.uds[i])
-        self.screen.refresh()
-        self.printline(13, 5, "> download galaxy.gz \"https://files.egn/galaxy.gz\"")
+        self.statusPrint(1, "[x] download & convert")
+    def initDownloadThread(self):
+        self.gamedata["logger"].info("Update wurde gestartet")
         self.downloadAndClip()
         usecarrier = "-nocarrier"
         if self.config["distances"]["carrier"] == "yes": usecarrier = "-usecarrier"
-        self.printline(16, 5, "> get stations from galaxy.json -max {0}ly {1}".format(self.config["filter"]["distance"], usecarrier))
+        self.statusPrint(1, "[>] Filter max {0}ly {1}".format(self.config["filter"]["distance"], usecarrier))
         j_stations = []     # Array
         j_bodies = []
         firsthundret = 0
@@ -432,7 +465,7 @@ class PageDownloads(PageBasepage):      # U
 
         # und gleich merken fürs spielen
         self.gamedata["stations"] = j_stations
-        self.printline(16, 5, "{0} Stationen gefunden".format(len(j_stations)))
+        self.statusPrint(3, "[X] {0} Stationen gefunden".format(len(j_stations)))
         os.remove(self.config["localnames"]["galaxy_gz"])
         os.remove(self.config["localnames"]["galaxy_json"])
         self.screen.clear()
@@ -440,7 +473,7 @@ class PageDownloads(PageBasepage):      # U
         self.config["pages"]["activepage"] = "0"
 
 
-
+1
 
 
 class PageCargo(PageBasepage):          # 1
@@ -1498,7 +1531,6 @@ class PageSettingsMain(PageSettingsSubpage):
     def chooseSpecialFunction(self, line):
         if line == 0: 
             self.config["pages"]["activepage"] = "U"
-            self.gamedata["logger"].warn("Update für Sternensysteme ausgelöst")
 class PageSettingsServices(PageSettingsSubpage):
     def __init__(self, config, gamedata, basepage):
         super().__init__(config, gamedata, basepage)
