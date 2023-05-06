@@ -12,22 +12,25 @@ WIN_MENU_FSS	VSS	FSS
 WIN_MENU_SETTINGS	Einstellungen	Settings
 PAGE_SETTINGS_MAIN_TABNAME	Einstellungen	Settings
 PAGE_SETTINGS_MAIN_HEADLINE	Allgemeine Einstellungen	General Settings
-PAGE_SETTINGS_MAIN_UPDATE	Update der Sternensysteme	Star systems update
-PAGE_SETTINGS_MAIN_SALE_SYSTEM	max. Entfernung der Systeme für Verkauf (Ly)	max. distance of systems for sale (Ly)
-PAGE_SETTINGS_MAIN_SALE_STATIONS	max. Entfernung der Stationen für Verkauf (Ls)	max. distance of stations for sale (Ls)
-PAGE_SETTINGS_MAIN_CARRIER	Carrier erlauben (bei Update + kein Prüfung auf Landeerlaubnis)	Allow carrier (for update + no check for landing permission)
 PAGE_SETTINGS_MAIN_AUTOPAGE	automatisch die Seiten umschalten	automatically switch pages
 PAGE_SETTINGS_MAIN_PRIOPAGE	Seite nach dem Ende der Route	Page after the end of the route
 PAGE_SETTINGS_MAIN_COLORS	Farben in der Darstellung nutzen	Use colors in the presentation
 PAGE_SETTINGS_MAIN_EDMC	Autostart von EDMarketConnector	Autostart of EDMarketConnector
-PAGE_SETTINGS_MAIN_BUBBLE	Systeme weiter vom Heimatsystem, werden gelöscht/ignoriert (Ly)	Systems further from the home system will be deleted/ignored (Ly)
 PAGE_SETTINGS_MAIN_EVENTS	Events anzeigen (Debug-Funktion)	Show events (debug function)
 PAGE_SETTINGS_MAIN_FSS	VSS Seite nur bei manuellem Scan	FSS page only with manual scan
 PAGE_SETTINGS_MAIN_LANG	Sprache	Language
 PAGE_SETTINGS_SERVICE_TABNAME	Services	Services
 PAGE_SETTINGS_SERVICE_HEADER	Liste der Services in der Nähe	List of services nearby
 PAGE_SETTINGS_SERVICE_OUTPUTLINE	Service Anzeige für Zeile {line}	Service display for line {line}
-PAGE_SETTING_UNDERLINE	[~yCursor-Keys~w] zur Auswahl der Option - oder - [~yEnter~w] um Sonderfunktionen auszulösen	[~yCursor-Keys~w] to select option - or - [~yEnter~w] to trigger special functions
+PAGE_SETTINGS_UNDERLINE	[~yCursor-Keys~w] zur Auswahl der Option - oder - [~yEnter~w] um Sonderfunktionen auszulösen	[~yCursor-Keys~w] to select option - or - [~yEnter~w] to trigger special functions
+PAGE_SETTINGS_UPDATE_TABNAME	Updates	Updates
+PAGE_SETTINGS_UPDATES_HEADLINE	Update der Sternensysteme	Star systems update
+PAGE_SETTINGS_UPDATES_UPDATE	Enter drücken um Update zu starten	Press Enter to start update
+PAGE_SETTINGS_UPDATES_LOWMEMORY	Low-Memory Modus	Low memory mode
+PAGE_SETTINGS_UPDATES_SALE_SYSTEM	max. Entfernung der Systeme für Verkauf (Ly)	max. distance of systems for sale (Ly)
+PAGE_SETTINGS_UPDATES_SALE_STATIONS	max. Entfernung der Stationen für Verkauf (Ls)	max. distance of stations for sale (Ls)
+PAGE_SETTINGS_UPDATES_CARRIER	Carrier erlauben (bei Update + kein Prüfung auf Landeerlaubnis)	Allow carrier (for update + no check for landing permission)
+PAGE_SETTINGS_UPDATES_BUBBLE	Systeme weiter vom Heimatsystem, werden gelöscht/ignoriert (Ly)	Systems further from the home system will be deleted/ignored (Ly)
 PAGE_ROUTE_NOROUTE	es ist im Moment keine Reise geplant	no trip is planned at the moment
 PAGE_ROUTE_JUMPCOUNT	noch {count} Sprünge	still {count} jumps
 PAGE_ROUTE_ITINERAY	(~yR~w) Reiseroute: {distance}ly total	(~yR~w) Itinerary: {distance}ly total

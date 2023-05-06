@@ -296,7 +296,7 @@ class PageDownloads(PageBasepage):      # U
         else:
             self.statusClear()
             self.updating = 1
-            updateThread = threading.Thread(target=self.initDownloadThread)
+            updateThread = threading.Thread(target=self.initDownloadThread, daemon=True)
             updateThread.start()
             self.print(13, 5, ">>> Update wurde gestartet")
         self.screen.refresh()
@@ -311,6 +311,15 @@ class PageDownloads(PageBasepage):      # U
             self.gamedata["status"][i] = self.status[i]
         self.gamedata["hack"]["windows"]["status"].update()
         self.gamedata["hack"]["windows"]["menu"].update()
+    def initDownloadThread(self):
+        self.gamedata["logger"].info("Update wurde gestartet")
+        self.downloadAndUnpack()
+        if self.config["user"]["lowmemory"] == "yes":
+            self.convertJson2JsonL_LowMemory()
+        else:
+            self.convertJson2JsonL_FastMode()
+        self.filterStations()
+        self.updating = 0   # fertig mit dem Update
     def download(self, key):
         self.gamedata["logger"].info("Download Key -> " + key);
         last = 0
@@ -334,17 +343,29 @@ class PageDownloads(PageBasepage):      # U
                     if done != last:
                         last = done
                         self.statusPrint(1, "[>] download {0}0%".format(done))
-    def downloadAndClip(self):
+    def downloadAndUnpack(self):
         # download
-        self.statusPrint(1, "[>] download " + self.config["urls"]["galaxy_gz"])
+        self.statusPrint(1, "[ ] download " + self.config["urls"]["galaxy_gz"])
         self.download("galaxy_gz")
         # auspacken
-        self.statusPrint(1, "[>] unzip " + self.config["localnames"]["galaxy_gz"])
+        self.statusPrint(1, "[ ] unzip " + self.config["localnames"]["galaxy_gz"])
         with gzip.open(self.config["localnames"]["galaxy_gz"], 'rb') as f_in:
             with open(self.config["localnames"]["galaxy_json"], 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
+        self.statusPrint(1, "[x] download & unzip")
+    def convertJson2JsonL_FastMode(self):
+        self.statusPrint(2, "[ ] convert @ Fast-Mode")
+        with open(self.config["localnames"]["galaxy_json"], "r") as f:
+            stations = json.load(f)
+        with open(self.config["localnames"]["galaxy_json"], "w") as out:
+            for s in stations:
+                out.write(json.dumps(s))
+                out.write("\n")
+            out.flush()
+        self.statusPrint(2, "[x] convert @ Fast-Mode")
+    def convertJson2JsonL_LowMemory(self):
         # manuell wandeln von JSON nach JSONL
-        self.statusPrint(1, "[>] convert " + self.config["localnames"]["galaxy_json"])
+        self.statusPrint(2, "[ ] convert @ Low-Memory-Mode")
         with open(self.config["localnames"]["galaxy_json"], 'rb+') as file:
             file.seek(0, 0)
             # Klammer '[' am Anfang löschen - davon ausgehend das kein BOM
@@ -387,13 +408,11 @@ class PageDownloads(PageBasepage):      # U
                 if clipcounter < 0:
                     #print(f'tja, schief gelaufen bei Position {position}')
                     break
-        self.statusPrint(1, "[x] download & convert")
-    def initDownloadThread(self):
-        self.gamedata["logger"].info("Update wurde gestartet")
-        self.downloadAndClip()
-        usecarrier = "-nocarrier"
-        if self.config["distances"]["carrier"] == "yes": usecarrier = "-usecarrier"
-        self.statusPrint(1, "[>] Filter max {0}ly {1}".format(self.config["filter"]["distance"], usecarrier))
+        self.statusPrint(2, "[x] convert @ Low-Memory-Mode")
+    def filterStations(self):
+        usecarrier = "nocarrier"
+        if self.config["distances"]["carrier"] == "yes": usecarrier = "usecarrier"
+        self.statusPrint(3, "[>] Filter max {0}ly {1}".format(self.config["filter"]["distance"], usecarrier))
         j_stations = []     # Array
         j_bodies = []
         firsthundret = 0
@@ -473,7 +492,7 @@ class PageDownloads(PageBasepage):      # U
         self.config["pages"]["activepage"] = "0"
 
 
-1
+
 
 
 class PageCargo(PageBasepage):          # 1
@@ -1363,7 +1382,11 @@ class PageSettings(PageBasepage):
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.index = 0
-        self.pages = [ PageSettingsMain(config, gamedata, self), PageSettingsServices(config, gamedata, self) ]
+        self.pages = [ 
+                        PageSettingsMain(config, gamedata, self),
+                        PageSettingsServices(config, gamedata, self),
+                        PageSettingsUpdates(config, gamedata, self),
+                    ]
         self.subpage = self.pages[0]
         self.selectedLine = 0
         self.arrowLeft = u"\u25C0"
@@ -1394,7 +1417,7 @@ class PageSettings(PageBasepage):
     def update(self):
         self.screen.clear()
         self.print(0, 2, self.arrowLeft + " ~yHOME~w/~yEND~w " + self.arrowRight + "  |")
-        self.print(21, 2, self.t("PAGE_SETTING_UNDERLINE"))
+        self.print(21, 2, self.t("PAGE_SETTINGS_UNDERLINE"))
         pos = 17
         for i in range(0, len(self.pages)):
             page = self.pages[i]
@@ -1408,6 +1431,8 @@ class PageSettings(PageBasepage):
         self.subpage.update()
         self.screen.refresh()
 class PageSettingsSubpage:
+    distances = [ 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000 ]
+    optionYesNo = [ "yes", "no" ]
     def __init__(self, config, gamedata, basepage):
         self.config = config
         self.gamedata = gamedata
@@ -1473,64 +1498,40 @@ class PageSettingsMain(PageSettingsSubpage):
     def getSubPageName(self):
         return self.t("PAGE_SETTINGS_MAIN_TABNAME")
     def getOptionCount(self):
-        return 12
+        return 7
     def update(self):
         self.print(2, 5, self.t("PAGE_SETTINGS_MAIN_HEADLINE"))
-        self.updateOptionLine(0, self.getOptionValueSelected(0), self.t("PAGE_SETTINGS_MAIN_UPDATE"))
-        self.updateOptionLine(1, self.getOptionValueSelected(1), self.t("PAGE_SETTINGS_MAIN_SALE_SYSTEM"))
-        self.updateOptionLine(2, self.getOptionValueSelected(2), self.t("PAGE_SETTINGS_MAIN_SALE_STATIONS"))
-        self.updateOptionLine(3, self.getOptionValueSelected(3), self.t("PAGE_SETTINGS_MAIN_CARRIER"))
-        self.updateOptionLine(4, self.getOptionValueSelected(4), self.t("PAGE_SETTINGS_MAIN_AUTOPAGE"))
-        self.updateOptionLine(5, self.getOptionValueSelected(5), self.t("PAGE_SETTINGS_MAIN_PRIOPAGE"))
-        self.updateOptionLine(6, self.getOptionValueSelected(6), self.t("PAGE_SETTINGS_MAIN_COLORS"))
-        self.updateOptionLine(7, self.getOptionValueSelected(7), self.t("PAGE_SETTINGS_MAIN_EDMC"))
-        self.updateOptionLine(8, self.getOptionValueSelected(8), self.t("PAGE_SETTINGS_MAIN_BUBBLE"))
-        self.updateOptionLine(9, self.getOptionValueSelected(9), self.t("PAGE_SETTINGS_MAIN_EVENTS"))
-        self.updateOptionLine(10, self.getOptionValueSelected(10), self.t("PAGE_SETTINGS_MAIN_FSS"))
-        self.updateOptionLine(11, self.getOptionValueSelected(11), self.t("PAGE_SETTINGS_MAIN_LANG"))
+        self.updateOptionLine(0, self.getOptionValueSelected(0), self.t("PAGE_SETTINGS_MAIN_AUTOPAGE"))
+        self.updateOptionLine(1, self.getOptionValueSelected(1), self.t("PAGE_SETTINGS_MAIN_PRIOPAGE"))
+        self.updateOptionLine(2, self.getOptionValueSelected(2), self.t("PAGE_SETTINGS_MAIN_COLORS"))
+        self.updateOptionLine(3, self.getOptionValueSelected(3), self.t("PAGE_SETTINGS_MAIN_EDMC"))
+        self.updateOptionLine(4, self.getOptionValueSelected(4), self.t("PAGE_SETTINGS_MAIN_EVENTS"))
+        self.updateOptionLine(5, self.getOptionValueSelected(5), self.t("PAGE_SETTINGS_MAIN_FSS"))
+        self.updateOptionLine(6, self.getOptionValueSelected(6), self.t("PAGE_SETTINGS_MAIN_LANG"))
     def getOptionValueSelected(self, line):
-        if line == 0: return "update"
-        if line == 1: return self.config["distances"]["systems"]
-        if line == 2: return self.config["distances"]["stations"]
-        if line == 3: return self.config["distances"]["carrier"]
-        if line == 4: return self.config["pages"]["autopage"]
-        if line == 5: return self.config["pages"]["priopage"]
-        if line == 6: return self.config["pages"]["coloring"]
-        if line == 7: return self.config["pages"]["edmc"]
-        if line == 8: return self.config["filter"]["distance"]
-        if line == 9: return self.config["pages"]["events"]
-        if line == 10: return self.config["pages"]["onlydetailed"]
-        if line == 11: return self.config["user"]["language"]
+        if line == 0: return self.config["pages"]["autopage"]
+        if line == 1: return self.config["pages"]["priopage"]
+        if line == 2: return self.config["pages"]["coloring"]
+        if line == 3: return self.config["pages"]["edmc"]
+        if line == 4: return self.config["pages"]["events"]
+        if line == 5: return self.config["pages"]["onlydetailed"]
+        if line == 6: return self.config["user"]["language"]
     def setOptionValueSelected(self, line, option):
-        # Zeile 0 ist uninteressant
-        if line == 1: self.config["distances"]["systems"] = str(option)
-        if line == 2: self.config["distances"]["stations"] = str(option)
-        if line == 3: self.config["distances"]["carrier"] = str(option)
-        if line == 4: self.config["pages"]["autopage"] = str(option)
-        if line == 5: self.config["pages"]["priopage"] = str(option)
-        if line == 6: self.config["pages"]["coloring"] = str(option)
-        if line == 7: self.config["pages"]["edmc"] = str(option)
-        if line == 8: self.config["filter"]["distance"] = str(option)
-        if line == 9: self.config["pages"]["events"] = str(option)
-        if line == 10: self.config["pages"]["onlydetailed"] = str(option)
-        if line == 11: self.config["user"]["language"] = str(option)
+        if line == 0: self.config["pages"]["autopage"] = str(option)
+        if line == 1: self.config["pages"]["priopage"] = str(option)
+        if line == 2: self.config["pages"]["coloring"] = str(option)
+        if line == 3: self.config["pages"]["edmc"] = str(option)
+        if line == 4: self.config["pages"]["events"] = str(option)
+        if line == 5: self.config["pages"]["onlydetailed"] = str(option)
+        if line == 6: self.config["user"]["language"] = str(option)
     def getOptionValuePossible(self, line):
-        distances = [ 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000 ]
-        if line == 0: return "update"
-        if line == 1: return distances
-        if line == 2: return distances
-        if line == 3: return [ "yes", "no" ]
-        if line == 4: return [ "yes", "no" ]
-        if line == 5: return [ "mission", "cargo" ]
-        if line == 6: return [ "yes", "no" ]
-        if line == 7: return [ "yes", "no" ]
-        if line == 8: return distances
-        if line == 9: return [ "yes", "no" ]
-        if line == 10: return [ "yes", "no" ]
-        if line == 11: return self.gamedata["translations"]["languages"]
-    def chooseSpecialFunction(self, line):
-        if line == 0: 
-            self.config["pages"]["activepage"] = "U"
+        if line == 0: return self.optionYesNo
+        if line == 1: return [ "mission", "cargo" ]
+        if line == 2: return self.optionYesNo
+        if line == 3: return self.optionYesNo
+        if line == 4: return self.optionYesNo
+        if line == 5: return self.optionYesNo
+        if line == 6: return self.gamedata["translations"]["languages"]
 class PageSettingsServices(PageSettingsSubpage):
     def __init__(self, config, gamedata, basepage):
         super().__init__(config, gamedata, basepage)
@@ -1578,3 +1579,42 @@ class PageSettingsServices(PageSettingsSubpage):
         self.config["pages"]["services"] = result
     def getOptionValuePossible(self, line):
         return self.config["pages"]["services_known"].split(", ")
+class PageSettingsUpdates(PageSettingsSubpage):
+    def __init__(self, config, gamedata, basepage):
+        super().__init__(config, gamedata, basepage)
+    def getSubPageName(self):
+        return self.t("PAGE_SETTINGS_UPDATE_TABNAME")
+    def getOptionCount(self):
+        return 6
+    def update(self):
+        self.print(2, 5, self.t("PAGE_SETTINGS_UPDATES_HEADLINE"))
+        self.updateOptionLine(0, self.getOptionValueSelected(0), self.t("PAGE_SETTINGS_UPDATES_UPDATE"))
+        self.updateOptionLine(1, self.getOptionValueSelected(1), self.t("PAGE_SETTINGS_UPDATES_LOWMEMORY"))
+        self.updateOptionLine(2, self.getOptionValueSelected(2), self.t("PAGE_SETTINGS_UPDATES_SALE_SYSTEM"))
+        self.updateOptionLine(3, self.getOptionValueSelected(3), self.t("PAGE_SETTINGS_UPDATES_SALE_STATIONS"))
+        self.updateOptionLine(4, self.getOptionValueSelected(4), self.t("PAGE_SETTINGS_UPDATES_CARRIER"))
+        self.updateOptionLine(5, self.getOptionValueSelected(5), self.t("PAGE_SETTINGS_UPDATES_BUBBLE"))
+    def getOptionValueSelected(self, line):
+        if line == 0: return "update"
+        if line == 1: return self.config["user"]["lowmemory"]
+        if line == 2: return self.config["distances"]["systems"]
+        if line == 3: return self.config["distances"]["stations"]
+        if line == 4: return self.config["distances"]["carrier"]
+        if line == 5: return self.config["filter"]["distance"]
+    def setOptionValueSelected(self, line, option):
+        # Zeile 0 ist uninteressant
+        if line == 1: self.config["user"]["lowmemory"] = str(option)
+        if line == 2: self.config["distances"]["systems"] = str(option)
+        if line == 3: self.config["distances"]["stations"] = str(option)
+        if line == 4: self.config["distances"]["carrier"] = str(option)
+        if line == 5: self.config["filter"]["distance"] = str(option)
+    def getOptionValuePossible(self, line):
+        if line == 0: return "update"
+        if line == 1: return self.optionYesNo
+        if line == 2: return self.distances
+        if line == 3: return self.distances
+        if line == 4: return self.optionYesNo
+        if line == 5: return self.distances
+    def chooseSpecialFunction(self, line):
+        if line == 0: 
+            self.config["pages"]["activepage"] = "U"

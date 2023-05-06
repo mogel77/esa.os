@@ -103,6 +103,7 @@ def updateConfig():
     checkEntry('user', 'channel', 'auto')
     checkEntry('user', 'travel', '0')               # gesamte Resiedistanz
     checkEntry('user', 'language', 'de')
+    checkEntry('user', 'lowmemory', 'yes')          # besser beim Ersten mal
 
     # Seitenmanagement
     checkEntry('pages', 'activepage','1')           # aktive Seite
