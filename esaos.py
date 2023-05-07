@@ -76,7 +76,7 @@ gamedata["logger"].info("Startup")
 
 # CSV einlesen
 gamedata["translations"] = {}
-with open(config["localnames"]["translations"]) as csvfile:
+with open(config["localnames"]["translations"], encoding="utf-8") as csvfile:
     # { key : { lang : trans , ... } }
     header = csvfile.readline().split('\t')
     for line in csvfile:
@@ -203,6 +203,7 @@ class MyFileHandler(FileSystemEventHandler):
             if entry["event"] == "Scan": Event_Scan(entry)
             if entry["event"] == "FSSAllBodiesFound": Event_FSSAllBodiesFound(entry)
             if entry["event"] == "FSSDiscoveryScan": Event_FSSDiscoveryScan(entry)
+            if entry["event"] == "ShieldState": Event_ShieldState(entry)
             winmenu.update()
 
 
@@ -667,6 +668,18 @@ def Event_FSSDiscoveryScan(entry):
         gamedata["fss"]["count"] = -1
     autoPage(9)
 
+def Event_ShieldState(entry):
+    if not "ShieldsUp" in entry: return
+    if entry["ShieldsUp"] == True:
+        for i in range(0, 5):
+            gamedata["status"][i] = ""
+    else:
+        gamedata["status"][0] = " ____  _  _  __  ____  __    ____    ____   __   _  _  __ _ "
+        gamedata["status"][1] = "/ ___)/ )( \(  )(  __)(  )  (    \  (    \ /  \ / )( \(  ( \\"
+        gamedata["status"][2] = "\___ \) __ ( )(  ) _) / (_/\ ) D (   ) D ((  O )\ /\ //    /"
+        gamedata["status"][3] = "(____/\_)(_/(__)(____)\____/(____/  (____/ \__/ (_/\_)\_)__)"
+        gamedata["status"][4] = ""
+    winstatus.update()
 
 
 # { "timestamp":"2022-10-16T19:06:26Z", "event":"MissionAbandoned", "Name":"Mission_Collect_name", "MissionID":895117670 }
