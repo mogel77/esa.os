@@ -288,7 +288,6 @@ class PageDownloads(PageBasepage):      # U
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
     def update(self):
-        self.gamedata["stations"] = []
         self.screen.clear()
         for i in range(0, len(self.uds)): self.print(i + 2, 5, self.uds[i])
         if not self.updating == 0:
@@ -410,6 +409,7 @@ class PageDownloads(PageBasepage):      # U
                     break
         self.statusPrint(2, "[x] convert @ Low-Memory-Mode")
     def filterStations(self):
+        self.gamedata["stations"] = []  # bekannte Stationen löschen
         usecarrier = "nocarrier"
         if self.config["distances"]["carrier"] == "yes": usecarrier = "usecarrier"
         self.statusPrint(3, "[>] Filter max {0}ly {1}".format(self.config["filter"]["distance"], usecarrier))
@@ -495,7 +495,7 @@ class PageDownloads(PageBasepage):      # U
 
 
 
-class PageCargo(PageBasepage):          # 1
+class PageCargo(PageBasepage):          # 1 
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadCargo()
@@ -606,7 +606,7 @@ class PageCargo(PageBasepage):          # 1
         self.print(20, 2, self.t("PAGE_CARGO_DRONES").format(count = self.countDrones()))
         self.print(20, 95, "{0:>3} / {1:>3}".format(self.cargomax - self.cargouse, self.cargomax))
         self.print(20, 35, "{0:^20}".format("{0:,}\u00A2 ".format(self.marge_total)))
-class PageRoute(PageBasepage):          # 2
+class PageRoute(PageBasepage):          # 2 
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadRoute()
@@ -716,7 +716,7 @@ class PageRoute(PageBasepage):          # 2
         if key == "r" or key == "R":
             self.config["user"]["travel"] = "0"
             self.update()
-class PageMissions(PageBasepage):       # 3
+class PageMissions(PageBasepage):       # 3 
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadMissions()
@@ -831,7 +831,7 @@ class PageMissions(PageBasepage):       # 3
         else:
             self.print(line * 2 + 1, 2, "{0:>10}   Illegale Aktion in {1} ({2})".format(" ", mission["DestinationSystem"], mission["DestinationSettlement"]))
         if mission["DestinationSystem"] == self.config["user"]["system"]: self.isCorrectSystem = True
-class PageStoredModules(PageBasepage):  # 4
+class PageStoredModules(PageBasepage):  # 4 
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadStoredModules()
@@ -876,7 +876,7 @@ class PageStoredModules(PageBasepage):  # 4
                                                                 system = place)
             self.print(line, 2, output)
             line += 1
-class PageShipHangar(PageBasepage):     # 5
+class PageShipHangar(PageBasepage):     # 5 
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadStoredShips()
@@ -927,7 +927,7 @@ class PageShipHangar(PageBasepage):     # 5
             self.print(line * 2 + 2, 2, output1)
             self.print(line * 2 + 3, 21, output2)
             line += 1
-class PageShipOutfit(PageBasepage):     # 6
+class PageShipOutfit(PageBasepage):     # 6 
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadShipOutfit()
@@ -998,7 +998,7 @@ class PageShipOutfit(PageBasepage):     # 6
         printSlot(12, 2, self.t("PAGE_OUTFIT_WEAPON"), slots["weapons"])
         printSlot(0, 35, self.t("PAGE_OUTFIT_ADDON"), slots["options"])
         printSlot(0, 70, self.t("PAGE_OUTFIT_TOOLS"), slots["tools"])
-class PageSAASignals(PageBasepage):     # 7
+class PageSAASignals(PageBasepage):     # 7 
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadSignals()
@@ -1063,7 +1063,7 @@ class PageSAASignals(PageBasepage):     # 7
             self.print(4 + line, 5, output)
             line += 1
             self.screen.refresh() # nach jeder Zeile - das suchen der preise dauert immer etwas
-class PageAsteroid(PageBasepage):       # 8
+class PageAsteroid(PageBasepage):       # 8 
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadAsteroid()
@@ -1145,7 +1145,7 @@ class PageAsteroid(PageBasepage):       # 8
             self.print(8 + line, 5, output)
             line += 1
             self.screen.refresh() # nach jeder Zeile - das suchen der preise dauert immer etwas
-class PageFSS(PageBasepage):
+class PageFSS(PageBasepage):            # 9 
     SortMode = Enum("SortMode", ["Name", "Gravitation", "Temperatur", "Typ", "Eis", "Fels", "Metall", "MAX_SORTMODE"])
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
@@ -1375,6 +1375,34 @@ class PageFSS(PageBasepage):
         return "~w"
 
 
+
+
+
+class PageFarming(PageBasepage):        # 100 
+    def __init__(self, config, gamedata):
+        super().__init__(config, gamedata)
+    def update(self):
+        self.screen.clear()
+        if len(self.gamedata["farming"]["log"]) == 0: return
+        events = self.gamedata["farming"]["log"]
+        # alle alten Einträge
+        for i in range(1, len(events)):
+            line = events[i]
+            output = self.generateEntry(line)
+            self.print(i, 5, output)
+        # der neuste Eintrag
+        output = self.generateEntry(events[0])
+        for i in range(0, len(output)):
+            time.sleep(0.01)
+            self.print(0, 5 + i, output[i])
+            self.screen.refresh()
+    def generateEntry(self, entry):
+        # { "timestamp":"2023-05-13T16:36:37Z", "event":"MaterialCollected", "Category":"Raw", "Name":"iron", "Name_Localised":"Eisen", "Count":3 }
+        material = getDictItem(entry, "Name", "Name_Localised")
+        count = entry["Count"]
+        dt = datetime.fromisoformat(entry["timestamp"].replace("T", " ").replace("Z", ""))
+        dt = dt.strftime("%y-%m-%d %H:%M:%S")
+        return "[{0}] {1} {2} auf {3} gesammelt".format(dt, count, material, self.config["user"]["system"])
 
 
 

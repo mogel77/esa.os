@@ -12,6 +12,7 @@ from curses import wrapper
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from threading import Thread
+from datetime import datetime
 
 import tools
 import pages
@@ -64,7 +65,8 @@ gamedata["fss"] = {}                        # Scanndaten
 gamedata["fss"]["planets"] = []
 gamedata["fss"]["completed"] = False
 gamedata["fss"]["count"] = 0
-
+gamedata["farming"] = {}
+gamedata["farming"]["log"] = []             # Log für Farming via SRV (ggf. auch anderes)
 
 if os.path.exists("esaos.log"): os.remove("esaos.log")
 gamedata["logger"] = logging.getLogger("esaos")
@@ -204,6 +206,7 @@ class MyFileHandler(FileSystemEventHandler):
             if entry["event"] == "FSSAllBodiesFound": Event_FSSAllBodiesFound(entry)
             if entry["event"] == "FSSDiscoveryScan": Event_FSSDiscoveryScan(entry)
             if entry["event"] == "ShieldState": Event_ShieldState(entry)
+            if entry["event"] == "MaterialCollected": Event_MaterialCollected(entry)
             winmenu.update()
 
 
@@ -616,6 +619,10 @@ def Event_PowerplayFastTrack(entry):
     handleCreditsSub("Cost", entry)
 def Event_NpcCrewPaidWage(entry):
     handleCreditsSub("Amount", entry)
+def Event_MaterialCollected(entry):
+    gamedata["farming"]["log"].insert(0, entry)
+    gamedata["farming"]["log"] = gamedata["farming"]["log"][:22]
+    autoPage(100) # Farming-Page
 
 def Event_Scan(entry):
     global gamedata
@@ -772,6 +779,7 @@ def pageManager_raw():
     global config
     global pagesettings
     global pagecargo, pageroute, pagemissions, pagestoredmodules, pagesaasignals, pagelicense, pageshiphangar, pageshipoutfit, pageasteroid, pagedownloads, pagefss
+    global pagefarming
     pageNumber = config["pages"]["activepage"]
     if config["user"]["license"] == "yes":
         if pageNumber == pageManager.lastNumber : return
@@ -787,6 +795,7 @@ def pageManager_raw():
         if pageNumber == "9": pageManager.currentPage = pagefss
         if pageNumber == "S": pageManager.currentPage = pagesettings
         if pageNumber == "U": pageManager.currentPage = pagedownloads
+        if pageNumber == "100": pageManager.currentPage = pagefarming
         pageManager.lastNumber  = pageNumber
         pageManager.currentPage.update()
     else:
@@ -841,6 +850,7 @@ def prepareVersion():
 def main(stdsrc):
     global winheader, winmenu, winevents, winstatus
     global pagesettings, pagedownloads, pagelicense
+    global pagefarming
     global pagecargo, pageroute, pagemissions, pagestoredmodules, pagesaasignals, pageshiphangar, pageshipoutfit, pageasteroid, pagefss
 
     if config["pages"]["activepage"] == "U": config["pages"]["activepage"] = "1"
@@ -863,6 +873,7 @@ def main(stdsrc):
     pageasteroid = pages.PageAsteroid(config, gamedata)
     pagedownloads = pages.PageDownloads(config, gamedata)
     pagefss = pages.PageFSS(config, gamedata)
+    pagefarming = pages.PageFarming(config, gamedata)
     pageManager.lastNumber  = "?"
     pageManager.currentPage = pagecargo # pauschal
 
