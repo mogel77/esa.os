@@ -104,6 +104,7 @@ def updateConfig():
     checkEntry('user', 'travel', '0')               # gesamte Resiedistanz
     checkEntry('user', 'language', 'de')
     checkEntry('user', 'lowmemory', 'yes')          # besser beim Ersten mal
+    checkEntry('user', 'tempscale', 'Kelvin')       # Kelvin / Celsius / Fahrenheit
 
     # Seitenmanagement
     checkEntry('pages', 'activepage','1')           # aktive Seite

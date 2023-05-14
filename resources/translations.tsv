@@ -19,6 +19,7 @@ PAGE_SETTINGS_MAIN_EDMC	Autostart von EDMarketConnector	Autostart of EDMarketCon
 PAGE_SETTINGS_MAIN_EVENTS	Events anzeigen (Debug-Funktion)	Show events (debug function)
 PAGE_SETTINGS_MAIN_FSS	VSS Seite nur bei manuellem Scan	FSS page only with manual scan
 PAGE_SETTINGS_MAIN_LANG	Sprache	Language
+PAGE_SETTINGS_MAIN_TEMPSCALE	Temperatureinheit	Temperature unit
 PAGE_SETTINGS_SERVICE_TABNAME	Services	Services
 PAGE_SETTINGS_SERVICE_HEADER	Liste der Services in der Nähe	List of services nearby
 PAGE_SETTINGS_SERVICE_OUTPUTLINE	Service Anzeige für Zeile {line}	Service display for line {line}

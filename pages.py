@@ -13,7 +13,8 @@ from datetime import datetime
 from enum import Enum
 
 from tools import getDictItem
-from config import updateConfig
+from tools import convertTemperatur
+from tools import convertTemperaturUnit
 
 
 
@@ -1311,10 +1312,12 @@ class PageFSS(PageBasepage):            # 9
             type = self.formatBodyType(planet)
             details = self.formatDetails(planet)
             color = self.getGravityColor(planet["gravity"] / 10)
+            temperatur = convertTemperatur(planet["temp"], self.config["user"]["tempscale"])
+            unit = convertTemperaturUnit(self.config["user"]["tempscale"])
             if planet["landable"]:
-                gravity = "{0}{1:>4.1f}~wG {2:>5.0F}K".format(color, planet["gravity"] / 10 , planet["temp"])
+                gravity = "{0}{1:>4.1f}~wG {2:>5.0F}{3}".format(color, planet["gravity"] / 10 , temperatur, unit)
             else:
-                gravity = "{0:^4}~w  {1:>5.0F}K".format("--" , planet["temp"])
+                gravity = "{0:^4}~w  {1:>5.0F}{2}".format("--" , temperatur, unit)
             self.print(2 + i, 2, "{0:<25} {1:<12} {2:>15}   {3}".format(name, gravity, type, details))
     def formatPlanetName(self, planet):
         name = planet["name"]
@@ -1526,7 +1529,7 @@ class PageSettingsMain(PageSettingsSubpage):
     def getSubPageName(self):
         return self.t("PAGE_SETTINGS_MAIN_TABNAME")
     def getOptionCount(self):
-        return 7
+        return 8
     def update(self):
         self.print(2, 5, self.t("PAGE_SETTINGS_MAIN_HEADLINE"))
         self.updateOptionLine(0, self.getOptionValueSelected(0), self.t("PAGE_SETTINGS_MAIN_AUTOPAGE"))
@@ -1536,6 +1539,7 @@ class PageSettingsMain(PageSettingsSubpage):
         self.updateOptionLine(4, self.getOptionValueSelected(4), self.t("PAGE_SETTINGS_MAIN_EVENTS"))
         self.updateOptionLine(5, self.getOptionValueSelected(5), self.t("PAGE_SETTINGS_MAIN_FSS"))
         self.updateOptionLine(6, self.getOptionValueSelected(6), self.t("PAGE_SETTINGS_MAIN_LANG"))
+        self.updateOptionLine(7, self.getOptionValueSelected(7), self.t("PAGE_SETTINGS_MAIN_TEMPSCALE"))
     def getOptionValueSelected(self, line):
         if line == 0: return self.config["pages"]["autopage"]
         if line == 1: return self.config["pages"]["priopage"]
@@ -1544,6 +1548,7 @@ class PageSettingsMain(PageSettingsSubpage):
         if line == 4: return self.config["pages"]["events"]
         if line == 5: return self.config["pages"]["onlydetailed"]
         if line == 6: return self.config["user"]["language"]
+        if line == 7: return self.config["user"]["tempscale"]
     def setOptionValueSelected(self, line, option):
         if line == 0: self.config["pages"]["autopage"] = str(option)
         if line == 1: self.config["pages"]["priopage"] = str(option)
@@ -1552,6 +1557,7 @@ class PageSettingsMain(PageSettingsSubpage):
         if line == 4: self.config["pages"]["events"] = str(option)
         if line == 5: self.config["pages"]["onlydetailed"] = str(option)
         if line == 6: self.config["user"]["language"] = str(option)
+        if line == 7: self.config["user"]["tempscale"] = str(option)
     def getOptionValuePossible(self, line):
         if line == 0: return self.optionYesNo
         if line == 1: return [ "mission", "cargo" ]
@@ -1560,6 +1566,7 @@ class PageSettingsMain(PageSettingsSubpage):
         if line == 4: return self.optionYesNo
         if line == 5: return self.optionYesNo
         if line == 6: return self.gamedata["translations"]["languages"]
+        if line == 7: return [ "Kelvin", "Celsius", "Fahrenheit", "Rankine", "Delisle", "Reaumur", "Newton", "Romer" ]
 class PageSettingsServices(PageSettingsSubpage):
     def __init__(self, config, gamedata, basepage):
         super().__init__(config, gamedata, basepage)
