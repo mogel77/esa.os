@@ -21,6 +21,12 @@ from config import updateConfig
 from tools import getDictItem
 
 
+# { "timestamp":"2023-05-17T17:56:20Z", "event":"SAASignalsFound", "BodyName":"Wredgaei FN-Y c28-1 2", "SystemAddress":353764578042, "BodyID":3, "Signals":[ { "Type":"$SAA_SignalType_Biological;", "Type_Localised":"Biologisch", "Count":1 } ], "Genuses":[ { "Genus":"$Codex_Ent_Bacterial_Genus_Name;", "Genus_Localised":"Bacterium" } ] }
+# { "timestamp":"2023-05-17T17:54:50Z", "event":"ScanOrganic", "ScanType":"Sample", "Genus":"$Codex_Ent_Bacterial_Genus_Name;", "Genus_Localised":"Bacterium", "Species":"$Codex_Ent_Bacterial_12_Name;", "Species_Localised":"Bacterium Cerbrus", "Variant":"$Codex_Ent_Bacterial_12_G_Name;", "Variant_Localised":"Bacterium Cerbrus - Smaragd", "SystemAddress":353764578042, "Body":3 }
+# { "timestamp":"2023-05-17T17:54:55Z", "event":"ScanOrganic", "ScanType":"Analyse", "Genus":"$Codex_Ent_Bacterial_Genus_Name;", "Genus_Localised":"Bacterium", "Species":"$Codex_Ent_Bacterial_12_Name;", "Species_Localised":"Bacterium Cerbrus", "Variant":"$Codex_Ent_Bacterial_12_G_Name;", "Variant_Localised":"Bacterium Cerbrus - Smaragd", "SystemAddress":353764578042, "Body":3 }
+# { "timestamp":"2023-05-17T17:25:48Z", "event":"SAASignalsFound", "BodyName":"Wredgaei FN-Y c28-1 2", "SystemAddress":353764578042, "BodyID":3, "Signals":[ { "Type":"$SAA_SignalType_Biological;", "Type_Localised":"Biologisch", "Count":1 } ], "Genuses":[ { "Genus":"$Codex_Ent_Bacterial_Genus_Name;", "Genus_Localised":"Bacterium" } ] }
+# { "timestamp":"2023-05-17T17:09:48Z", "event":"FSSBodySignals", "BodyName":"Wredgaei FN-Y c28-1 6", "BodyID":7, "SystemAddress":353764578042, "Signals":[ { "Type":"$SAA_SignalType_Biological;", "Type_Localised":"Biologisch", "Count":1 } ] }
+# ?? { "timestamp":"2023-05-17T17:08:11Z", "event":"FSSDiscoveryScan", "Progress":0.292145, "BodyCount":8, "NonBodyCount":0, "SystemName":"Wredgaei FN-Y c28-1", "SystemAddress":353764578042 }
 
 
 
@@ -63,6 +69,7 @@ gamedata["system"] = {}                     # Informationen zum aktuellem System
 gamedata["system"]["name"] = config["user"]["system"]  # Namen übernehmen
 gamedata["fss"] = {}                        # Scanndaten
 gamedata["fss"]["planets"] = []
+gamedata["fss"]["signals"] = []
 gamedata["fss"]["completed"] = False
 gamedata["fss"]["count"] = 0
 gamedata["farming"] = {}
@@ -205,6 +212,7 @@ class MyFileHandler(FileSystemEventHandler):
             if entry["event"] == "Scan": Event_Scan(entry)
             if entry["event"] == "FSSAllBodiesFound": Event_FSSAllBodiesFound(entry)
             if entry["event"] == "FSSDiscoveryScan": Event_FSSDiscoveryScan(entry)
+            if entry["event"] == "FSSBodySignals": Event_FSSBodySignals(entry)
             if entry["event"] == "ShieldState": Event_ShieldState(entry)
             if entry["event"] == "MaterialCollected": Event_MaterialCollected(entry)
             winmenu.update()
@@ -290,7 +298,8 @@ def Event_FSDJump(entry):
     gamedata["status"][2] = lineEconomy(entry)
     gamedata["status"][3] = lineFaction(entry)
     gamedata["status"][4] = ""
-    gamedata["fss"]["planets"] = []        # letzten Scan löschen
+    gamedata["fss"]["planets"] = []         # letzten Scan löschen
+    gamedata["fss"]["signals"] = []         # letzten Scan löschen
     gamedata["fss"]["completed"] = False
     gamedata["fss"]["count"] = 0
     if "StarClass" in entry:
@@ -370,6 +379,7 @@ def Event_Liftoff(entry):
     gamedata["status"][2] = ""
     gamedata["status"][3] = ""
     gamedata["status"][4] = ""
+    autoPage(9)
     winstatus.update()
 
 def Event_Cargo(entry):
@@ -628,6 +638,7 @@ def Event_Scan(entry):
     global gamedata
     planet = {}
     planet["name"] = entry["BodyName"]
+    planet["id"] = entry["BodyID"]
     if "PlanetClass" in entry:
         planet["type"] = entry["PlanetClass"]
     else:
@@ -655,9 +666,14 @@ def Event_Scan(entry):
         planet["landable"] = entry["Landable"]
     else:
         planet["landable"] = False
-    gamedata["fss"]["planets"].append(planet) # TODO auf doppelte prüfen
-    with open(config["localnames"]["fss"], "w") as out:
-        out.write(json.dumps(gamedata["fss"]["planets"]) + '\n')
+    found = False
+    for p in gamedata["fss"]["planets"]:
+        if p["id"] == planet["id"]:
+            found = True
+    if found == False:
+        gamedata["fss"]["planets"].append(planet)
+        with open(config["localnames"]["fss"], "w") as out:
+            out.write(json.dumps(gamedata["fss"]["planets"]) + '\n')
     if config["pages"]["onlydetailed"] == "no":
         autoPage(9)
     else:
@@ -674,6 +690,20 @@ def Event_FSSDiscoveryScan(entry):
     else:
         gamedata["fss"]["count"] = -1
     autoPage(9)
+def Event_FSSBodySignals(entry):
+    global gamedata
+    signals = {}
+    signals["id"] = entry["BodyID"]
+    signals["Signals"] = entry["Signals"]
+    found = False
+    for s in gamedata["fss"]["signals"]:
+        if s["id"] == entry["BodyID"]:
+            found = True
+    if found == False:
+        gamedata["fss"]["signals"].append(signals)
+    with open(config["localnames"]["fsssignals"], "w") as out:
+        out.write(json.dumps(gamedata["fss"]["signals"]) + '\n')
+    # -- nicht nötig -- autoPage(9)
 
 def Event_ShieldState(entry):
     if not "ShieldsUp" in entry: return

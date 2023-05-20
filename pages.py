@@ -1154,10 +1154,13 @@ class PageFSS(PageBasepage):            # 9
         self.sortmode = PageFSS.SortMode.Name
         self.sortup = True
         self.gamedata["logger"].info("FSS initialisiert")
-        self.details = False    # True -> Materialien sonst die Zusammensetzung
+        self.materials = False    # True -> Materialien sonst die Zusammensetzung
         if exists(self.config["localnames"]["fss"]):
             with open(self.config["localnames"]["fss"], "r") as f:
                 self.gamedata["fss"]["planets"] = json.load(f)
+        if exists(self.config["localnames"]["fsssignals"]):
+            with open(self.config["localnames"]["fsssignals"], "r") as f:
+                self.gamedata["fss"]["signals"] = json.load(f)
     def generateFssScanData(self):
         # für Debug-Optionen
         for i in range(0, 25):
@@ -1204,7 +1207,7 @@ class PageFSS(PageBasepage):            # 9
         if chr(key) == "g":
             self.generateFssScanData()
         if chr(key) == "m":
-            self.details = not self.details
+            self.materials = not self.materials
         if chr(key) == "r":
             self.sortup = not self.sortup
         self.update()
@@ -1320,6 +1323,18 @@ class PageFSS(PageBasepage):            # 9
                 gravity = "{0:^4}~w  {1:>5.0F}{2}".format("--" , temperatur, unit)
             self.print(2 + i, 2, "{0:<25} {1:<12} {2:>15}   {3}".format(name, gravity, type, details))
     def formatPlanetName(self, planet):
+        def getSignals(id):
+            for s in self.gamedata["fss"]["signals"]:
+                if id == s["id"]:
+                    return s["Signals"]
+            return None
+        def hasSignal(planet, signame):
+            signals = getSignals(planet["id"])
+            if signals is None: return 0
+            for s in signals:
+                if s["Type"] in signame:
+                    return s["Count"]
+            return 0
         name = planet["name"]
         if name == self.config["user"]["system"]:
             return name
@@ -1328,7 +1343,10 @@ class PageFSS(PageBasepage):            # 9
             # doppelt im Namen - Leerzeichen beachten !
             name = name.replace("Belt Cluster ", "")
             name = name.replace(self.config["user"]["system"], "Belt Cluster")
-        return name.replace(self.config["user"]["system"], "Planet")
+        name = name.replace(self.config["user"]["system"], "Planet")
+        geo = "G" if hasSignal(planet, "$SAA_SignalType_Geological;") > 0 else "."
+        bio = "B" if hasSignal(planet, "$SAA_SignalType_Biological;") > 0 else "."
+        return "{0}{1} {2}".format(geo, bio, name)
     def formatBodyType(self, planet):
         count = planet["type"].count(" ")
         if count > 2: # max. 2 Leerzeichen erlauben
@@ -1336,7 +1354,7 @@ class PageFSS(PageBasepage):            # 9
             return parts[0] + " " + parts[1]
         return planet["type"]
     def formatDetails(self, planet):
-        if self.details:
+        if self.materials:
             return self.formatMaterials(planet["materials"])
         return self.formatComposition(planet["composition"])
     def formatComposition(self, composition):

@@ -60,6 +60,7 @@ def updateConfig():
     checkEntry('localnames', 'missions', 'daten/missions.json')
     checkEntry('localnames', 'modules', 'daten/modules.json')
     checkEntry('localnames', 'saasignals', 'daten/saasignals.json')
+    checkEntry('localnames', 'fsssignals', 'daten/fsssignals.json')
     checkEntry('localnames', 'hangar', 'daten/hangar.json')
     checkEntry('localnames', 'outfit', 'daten/outfit.json')
     checkEntry('localnames', 'asteroid', 'daten/asteroid.json')
