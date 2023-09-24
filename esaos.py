@@ -22,10 +22,9 @@ from tools import getDictItem
 
 
 # { "timestamp":"2023-05-17T17:56:20Z", "event":"SAASignalsFound", "BodyName":"Wredgaei FN-Y c28-1 2", "SystemAddress":353764578042, "BodyID":3, "Signals":[ { "Type":"$SAA_SignalType_Biological;", "Type_Localised":"Biologisch", "Count":1 } ], "Genuses":[ { "Genus":"$Codex_Ent_Bacterial_Genus_Name;", "Genus_Localised":"Bacterium" } ] }
-# { "timestamp":"2023-05-17T17:54:50Z", "event":"ScanOrganic", "ScanType":"Sample", "Genus":"$Codex_Ent_Bacterial_Genus_Name;", "Genus_Localised":"Bacterium", "Species":"$Codex_Ent_Bacterial_12_Name;", "Species_Localised":"Bacterium Cerbrus", "Variant":"$Codex_Ent_Bacterial_12_G_Name;", "Variant_Localised":"Bacterium Cerbrus - Smaragd", "SystemAddress":353764578042, "Body":3 }
-# { "timestamp":"2023-05-17T17:54:55Z", "event":"ScanOrganic", "ScanType":"Analyse", "Genus":"$Codex_Ent_Bacterial_Genus_Name;", "Genus_Localised":"Bacterium", "Species":"$Codex_Ent_Bacterial_12_Name;", "Species_Localised":"Bacterium Cerbrus", "Variant":"$Codex_Ent_Bacterial_12_G_Name;", "Variant_Localised":"Bacterium Cerbrus - Smaragd", "SystemAddress":353764578042, "Body":3 }
 # { "timestamp":"2023-05-17T17:25:48Z", "event":"SAASignalsFound", "BodyName":"Wredgaei FN-Y c28-1 2", "SystemAddress":353764578042, "BodyID":3, "Signals":[ { "Type":"$SAA_SignalType_Biological;", "Type_Localised":"Biologisch", "Count":1 } ], "Genuses":[ { "Genus":"$Codex_Ent_Bacterial_Genus_Name;", "Genus_Localised":"Bacterium" } ] }
 # { "timestamp":"2023-05-17T17:09:48Z", "event":"FSSBodySignals", "BodyName":"Wredgaei FN-Y c28-1 6", "BodyID":7, "SystemAddress":353764578042, "Signals":[ { "Type":"$SAA_SignalType_Biological;", "Type_Localised":"Biologisch", "Count":1 } ] }
+# { "timestamp":"2023-09-17T07:51:24Z", "event":"SAASignalsFound", "BodyName":"Kappa-1 Volantis B 7 a", "SystemAddress":211772499132, "BodyID":57, "Signals":[ { "Type":"$SAA_SignalType_Biological;", "Type_Localised":"Biologisch", "Count":2 }, { "Type":"$SAA_SignalType_Geological;", "Type_Localised":"Geologisch", "Count":3 } ], "Genuses":[ { "Genus":"$Codex_Ent_Brancae_Name;", "Genus_Localised":"Hirnbäume" }, { "Genus":"$Codex_Ent_Bacterial_Genus_Name;", "Genus_Localised":"Bacterium" } ] }
 # ?? { "timestamp":"2023-05-17T17:08:11Z", "event":"FSSDiscoveryScan", "Progress":0.292145, "BodyCount":8, "NonBodyCount":0, "SystemName":"Wredgaei FN-Y c28-1", "SystemAddress":353764578042 }
 
 
@@ -215,6 +214,7 @@ class MyFileHandler(FileSystemEventHandler):
             if entry["event"] == "FSSBodySignals": Event_FSSBodySignals(entry)
             if entry["event"] == "ShieldState": Event_ShieldState(entry)
             if entry["event"] == "MaterialCollected": Event_MaterialCollected(entry)
+            if entry["event"] == "ScanOrganic": Event_ScanOrganic(entry)
             winmenu.update()
 
 
@@ -630,6 +630,10 @@ def Event_PowerplayFastTrack(entry):
 def Event_NpcCrewPaidWage(entry):
     handleCreditsSub("Amount", entry)
 def Event_MaterialCollected(entry):
+    gamedata["farming"]["log"].insert(0, entry)
+    gamedata["farming"]["log"] = gamedata["farming"]["log"][:22]
+    autoPage(100) # Farming-Page
+def Event_ScanOrganic(entry):
     gamedata["farming"]["log"].insert(0, entry)
     gamedata["farming"]["log"] = gamedata["farming"]["log"][:22]
     autoPage(100) # Farming-Page

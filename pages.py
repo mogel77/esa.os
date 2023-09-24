@@ -1000,6 +1000,7 @@ class PageShipOutfit(PageBasepage):     # 6
         printSlot(0, 35, self.t("PAGE_OUTFIT_ADDON"), slots["options"])
         printSlot(0, 70, self.t("PAGE_OUTFIT_TOOLS"), slots["tools"])
 class PageSAASignals(PageBasepage):     # 7 
+    # { "timestamp":"2023-09-17T07:51:24Z", "event":"SAASignalsFound", "BodyName":"Kappa-1 Volantis B 7 a", "SystemAddress":211772499132, "BodyID":57, "Signals":[ { "Type":"$SAA_SignalType_Biological;", "Type_Localised":"Biologisch", "Count":2 }, { "Type":"$SAA_SignalType_Geological;", "Type_Localised":"Geologisch", "Count":3 } ], "Genuses":[ { "Genus":"$Codex_Ent_Brancae_Name;", "Genus_Localised":"Hirnbäume" }, { "Genus":"$Codex_Ent_Bacterial_Genus_Name;", "Genus_Localised":"Bacterium" } ] }
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
         self.loadSignals()
@@ -1018,6 +1019,7 @@ class PageSAASignals(PageBasepage):     # 7
         else:
             if len(self.gamedata["saasignals"]["Signals"]) > 0:
                 self.update_signals()
+                self.update_genuses()
             else:
                 self.update_clear()
         self.screen.refresh()
@@ -1027,7 +1029,7 @@ class PageSAASignals(PageBasepage):     # 7
         self.print(2, 4, self.t("PAGE_SAA_HEADLINE").format(name = self.gamedata["saasignals"]["BodyName"]))
         self.screen.refresh()
         playerpos = [ float(self.config["user"]["locx"]), float(self.config["user"]["locy"]), float(self.config["user"]["locz"]) ]
-        line = 0
+        self.line = 0
         for signal in self.gamedata["saasignals"]["Signals"]:
             name = getDictItem(signal, "Type", "Type_Localised")
             count = signal["Count"]
@@ -1061,9 +1063,19 @@ class PageSAASignals(PageBasepage):     # 7
                                                             distance = maxdistance,
                                                             system = market["system"],
                                                             market = market["name"])
-            self.print(4 + line, 5, output)
-            line += 1
+            self.print(4 + self.line, 5, output)
+            self.line += 1
             self.screen.refresh() # nach jeder Zeile - das suchen der preise dauert immer etwas
+    def update_genuses(self):
+        self.line += 5 # Leerzeilen
+        self.print(2 + self.line, 4, self.t("PAGE_SAA_GENUSES"))
+        self.line += 2 # eine Leerzeile
+        for bio in self.gamedata["saasignals"]["Genuses"]:
+            name = getDictItem(bio, "Genus", "Genus_Localised")
+            output = self.t("PAGE_SAA_GENUSES").format(genuses = name)
+            self.print(2 + self.line, 15, name)
+            self.line += 1
+        self.screen.refresh()
 class PageAsteroid(PageBasepage):       # 8 
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
@@ -1402,6 +1414,8 @@ class PageFSS(PageBasepage):            # 9
 class PageFarming(PageBasepage):        # 100 
     def __init__(self, config, gamedata):
         super().__init__(config, gamedata)
+        self.biocount = 0;
+        self.biolast = "unnamed"
     def update(self):
         self.screen.clear()
         if len(self.gamedata["farming"]["log"]) == 0: return
@@ -1418,12 +1432,30 @@ class PageFarming(PageBasepage):        # 100
             self.print(0, 5 + i, output[i])
             self.screen.refresh()
     def generateEntry(self, entry):
+        if entry["event"] == "MaterialCollected": return self.generateEntry_Material(entry)
+        if entry["event"] == "ScanOrganic": return self.generateEntry_ScanOrganic(entry)
+    def generateEntry_Material(self, entry):
         # { "timestamp":"2023-05-13T16:36:37Z", "event":"MaterialCollected", "Category":"Raw", "Name":"iron", "Name_Localised":"Eisen", "Count":3 }
         material = getDictItem(entry, "Name", "Name_Localised")
         count = entry["Count"]
         dt = datetime.fromisoformat(entry["timestamp"].replace("T", " ").replace("Z", ""))
         dt = dt.strftime("%y-%m-%d %H:%M:%S")
         return "[{0}] {1} {2} auf {3} gesammelt".format(dt, count, material, self.config["user"]["system"])
+    def generateEntry_ScanOrganic(self, entry):
+        # { "timestamp":"2023-05-17T17:54:50Z", "event":"ScanOrganic", "ScanType":"Sample", "Genus":"$Codex_Ent_Bacterial_Genus_Name;", "Genus_Localised":"Bacterium", "Species":"$Codex_Ent_Bacterial_12_Name;", "Species_Localised":"Bacterium Cerbrus", "Variant":"$Codex_Ent_Bacterial_12_G_Name;", "Variant_Localised":"Bacterium Cerbrus - Smaragd", "SystemAddress":353764578042, "Body":3 }
+        # { "timestamp":"2023-05-17T17:54:55Z", "event":"ScanOrganic", "ScanType":"Analyse", "Genus":"$Codex_Ent_Bacterial_Genus_Name;", "Genus_Localised":"Bacterium", "Species":"$Codex_Ent_Bacterial_12_Name;", "Species_Localised":"Bacterium Cerbrus", "Variant":"$Codex_Ent_Bacterial_12_G_Name;", "Variant_Localised":"Bacterium Cerbrus - Smaragd", "SystemAddress":353764578042, "Body":3 }
+        # { "timestamp":"2023-09-16T18:51:37Z", "event":"ScanOrganic", "ScanType":"Log", "Genus":"$Codex_Ent_Brancae_Name;", "Genus_Localised":"Hirnbäume", "Species":"$Codex_Ent_SeedEFGH_Name;", "Species_Localised":"Lividum-Hirnbaum", "Variant":"$Codex_Ent_SeedEFGH_Name;", "Variant_Localised":"Lividum-Hirnbaum", "SystemAddress":211772499132, "Body":23 }
+        genus = getDictItem(entry, "Genus", "Genus_Localised")
+        species = getDictItem(entry, "Species", "Species_Localised")
+        variant = getDictItem(entry, "Variant", "Variant_Localised");
+        if entry["ScanType"] == "Log":
+            self.biocount = 0
+            "Bio-Probe der Art {0} gesamelt ({1}/3) - Codex-Eintrag angelegt".format(variant, self.biocount)
+        if entry["ScanType"] == "Analyse":
+            return "Analyse von {0} vollständig (Gattung {1} [Famile {2}])".format(variant, species, genus)
+        self.biocount += 1
+        return "Bio-Probe der Art {0} gesamelt ({1}/3)".format(variant, self.biocount)
+        
 
 
 
