@@ -8,6 +8,7 @@ import time
 import multiprocessing
 import platform
 import subprocess
+import signal
 from curses import wrapper
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -38,6 +39,7 @@ config.read('config.ini')
 gamedata = {}
 gamedata["hack"] = {}                       # !! DOUH !!
 gamedata["hack"]["windows"] = {}            # !! DOUH !!
+gamedata["hack"]["stdscr"] = None           # !! DOUH !!
 gamedata["stations"] = []                   # alle bekannten Stationen
 gamedata["modnames"] = []                   # alle Module
 gamedata["cargo"] = []                      # Frachtraum
@@ -101,7 +103,7 @@ with open(config["localnames"]["translations"], encoding="utf-8") as csvfile:
 gamedata["logger"].info("Übersetzungen geladen")
 
 
-stdscr = curses.initscr()
+gamedata["hack"]["stdscr"] = curses.initscr()
 
 
 
@@ -221,6 +223,7 @@ class MyFileHandler(FileSystemEventHandler):
 
 def Event_Shutdown(entry):
     tools.saveConfig(config, gamedata)
+    os.kill(os.getpid(), signal.SIGINT)
 def Event_SquadronStartup(entry):
     config["user"]["squadname"] = entry["SquadronName"]
     config["user"]["squadrank"] = str(entry["CurrentRank"])
@@ -944,7 +947,7 @@ def main(stdsrc):
             winevents.update()
             winheader.update()
             winmenu.update()
-            input = stdscr.getch()
+            input = gamedata["hack"]["stdscr"].getch()
             # ! douh !
             if chr(input) == "1": config["pages"]["activepage"] = "1"
             if chr(input) == "2": config["pages"]["activepage"] = "2"
@@ -956,15 +959,16 @@ def main(stdsrc):
             if chr(input) == "8": config["pages"]["activepage"] = "8"
             if chr(input) == "9": config["pages"]["activepage"] = "9"
             if chr(input) == "s" or chr(input) == "S": config["pages"]["activepage"] = "S"
+            if chr(input) == "x" or chr(input) == "X": break
             # ! douh !
             pageManager()
             inputManager(input) # alle anderen Tasten werden hier pro Page behandelt
             pageManager()
             # ! douh !
     except KeyboardInterrupt:
-        if not observer is None: observer.stop()
-    if not observer is None: observer.join()
-
+        gamedata["logger"].warn("Keyboard-Interrupt ausgelöst");
+    if not observer is None: observer.stop()
+    gamedata["hack"]["stdscr"].refresh()
 
 edmc = Thread(target=startEDMC)
 edmc = multiprocessing.Process(target=startEDMC)
@@ -976,4 +980,4 @@ edmc.kill()
 # Config sichern, nach dem beenden
 print("speichere Konfiguration")
 tools.saveConfig(config, gamedata)
-print("bye, bye")
+print("\n\n\tdanke für das Nutzen von ESA.OS - have a nice day\n\n")
