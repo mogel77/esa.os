@@ -872,7 +872,7 @@ def startEDMC():
 
 def prepareVersion():
     global config, gamedata
-    VERSION_REQUIRED = "4"
+    VERSION_REQUIRED = "5"
     VERSION_CURRENT = config["esaos"]["version"]
     if not VERSION_CURRENT == VERSION_REQUIRED:
         gamedata["logger"].info("Version stimmt nicht - lösche alte Files")
@@ -882,6 +882,9 @@ def prepareVersion():
         if VERSION_CURRENT == "3":
             gamedata["logger"].info(" - lösche alte URL für Stations Daten")
             config["urls"]["galaxy_gz"] = "https://downloads.spansh.co.uk/galaxy_stations.json.gz"
+        if VERSION_CURRENT == "4":
+            gamedata["logger"].info(" - lösche alte URL für Stations Daten")
+            config["urls"]["galaxy_gz"] = "https://downloads.spansh.co.uk/galaxy_1day.json.gz"
         config["esaos"]["version"] = VERSION_REQUIRED
         tools.saveConfig(config, gamedata)
 def main(stdsrc):

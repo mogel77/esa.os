@@ -46,7 +46,13 @@ def updateConfig():
 
     # Download URLS
     # -- old -- checkEntry('urls', 'galaxy_gz', 'https://downloads.spansh.co.uk/galaxy_1day.json.gz')
+    # diese URL wird für die Daten verwendet
     checkEntry('urls', 'galaxy_gz', 'https://downloads.spansh.co.uk/galaxy_stations.json.gz')
+    # diese URL sind alle möglichen Alternative
+    checkEntry('urls', 'galaxy_gz_full', 'https://downloads.spansh.co.uk/galaxy_stations.json.gz')
+    checkEntry('urls', 'galaxy_gz_month', 'https://downloads.spansh.co.uk/galaxy_1month.json.gz')
+    checkEntry('urls', 'galaxy_gz_week', 'https://downloads.spansh.co.uk/galaxy_7days.json.gz')
+    checkEntry('urls', 'galaxy_gz_day', 'https://downloads.spansh.co.uk/galaxy_1day.json.gz')
 
     # Dateinamen nach dem Download bzw. zum Speichern der Daten
     checkEntry('localnames', 'stations', 'daten/stations.json')
