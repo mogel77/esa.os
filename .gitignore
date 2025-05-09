@@ -3,3 +3,7 @@ daten
 esaos.log
 __pycache__
 *.kate-swp
+.session
+.vscode
+logger.log
+

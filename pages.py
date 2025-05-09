@@ -31,10 +31,10 @@ class PageBasepage:
         curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
     def t(self, key): # !! douh !! die Erste
         lang = self.config["user"]["language"]
-        if not key in self.gamedata["translations"]:
+        if key not in self.gamedata["translations"]:
             self.gamedata["logger"].error(f"Key '{key}' nicht gefunden")
             return key
-        if not lang in self.gamedata["translations"][key]:
+        if lang not in self.gamedata["translations"][key]:
             self.gamedata["logger"].error(f"Sprache '{lang}' für '{key}' nicht gefunden")
             return lang
         return self.gamedata["translations"][key][lang]
@@ -215,16 +215,16 @@ class PageLoading(PageBasepage):        # ohne Kennung
             "",
             " ____  __    __  ____  ____                        ",
             "(  __)(  )  (  )(_  _)(  __)                       ",
-            " ) _) / (_/\ )(   )(   ) _)                        ",
-            "(____)\____/(__) (__) (____)                       ",
+            " ) _) / (_/\\ )(   )(   ) _)                        ",
+            "(____)\\____/(__) (__) (____)                       ",
             " ____  _  _  __  ____                              ",
-            "/ ___)/ )( \(  )(  _ \                             ",
-            "\___ \) __ ( )(  ) __/                             ",
-            "(____/\_)(_/(__)(__)                               ",
+            "/ ___)/ )( \\(  )(  _ \\                             ",
+            "\\___ \\) __ ( )(  ) __/                             ",
+            "(____/\\_)(_/(__)(__)                               ",
             "  __   ____  ____  __  ____  ____  __   __ _  ____ ",
-            " / _\ / ___)/ ___)(  )/ ___)(_  _)/ _\ (  ( \(_  _)",
-            "/    \\\\___ \\\\___ \ )( \___ \  )( /    \/    /  )(  ",
-            "\_/\_/(____/(____/(__)(____/ (__)\_/\_/\_)__) (__) ",
+            " / _\\ / ___)/ ___)(  )/ ___)(_  _)/ _\\ (  ( \\(_  _)",
+            "/    \\\\___ \\\\___ \\ )( \\___ \\  )( /    \\/    /  )(  ",
+            "\\_/\\_/(____/(____/(__)(____/ (__)\\_/\\_/\\_)__) (__) ",
             "",
             "Willkommen zurück {0}",
             " - lade Sternensysteme",
@@ -274,13 +274,13 @@ class PageLicense(PageBasepage):        # ohne Kennung
 class PageDownloads(PageBasepage):      # U
     uds = [
                 " _  _  ____  ____   __  ____  ____    ____  ____  ____                              ",
-                "/ )( \(  _ \(    \ / _\(_  _)(  __)  (    \(  __)(  _ \                             ",
-                ") \/ ( ) __/ ) D (/    \ )(   ) _)    ) D ( ) _)  )   /                             ",
-                "\____/(__)  (____/\_/\_/(__) (____)  (____/(____)(__\_)                             ",
+                "/ )( \\(  _ \\(    \\ / _\\(_  _)(  __)  (    \\(  __)(  _ \\                             ",
+                ") \\/ ( ) __/ ) D (/    \\ )(   ) _)    ) D ( ) _)  )   /                             ",
+                "\\____/(__)  (____/\\_/\\_/(__) (____)  (____/(____)(__\\_)                             ",
                 " ____  ____  ____  ____  __ _  ____  __ _  ____  _  _  ____  ____  ____  _  _  ____ ",
-                "/ ___)(_  _)(  __)(  _ \(  ( \(  __)(  ( \/ ___)( \/ )/ ___)(_  _)(  __)( \/ )(  __)",
-                "\___ \  )(   ) _)  )   //    / ) _) /    /\___ \ )  / \___ \  )(   ) _) / \/ \ ) _) ",
-                "(____/ (__) (____)(__\_)\_)__)(____)\_)__)(____/(__/  (____/ (__) (____)\_)(_/(____)",
+                "/ ___)(_  _)(  __)(  _ \\(  ( \\(  __)(  ( \\/ ___)( \\/ )/ ___)(_  _)(  __)( \\/ )(  __)",
+                "\\___ \\  )(   ) _)  )   //    / ) _) /    /\\___ \\ )  / \\___ \\  )(   ) _) / \\/ \\ ) _) ",
+                "(____/ (__) (____)(__\\_)\\_)__)(____)\\_)__)(____/(__/  (____/ (__) (____)\\_)(_/(____)",
                 "",
                 "(BTW: es ist Zeit für einen Kaffee)"
             ]
@@ -309,8 +309,9 @@ class PageDownloads(PageBasepage):      # U
         self.status[line] = msg
         for i in range(0, 4):
             self.gamedata["status"][i] = self.status[i]
-        self.gamedata["hack"]["windows"]["status"].update()
-        self.gamedata["hack"]["windows"]["menu"].update()
+        if "hack" in self.gamedata:
+            self.gamedata["hack"]["windows"]["status"].update()
+            self.gamedata["hack"]["windows"]["menu"].update()
     def initDownloadThread(self):
         self.gamedata["logger"].info("Update wurde gestartet")
         self.downloadAndUnpack()
@@ -324,6 +325,7 @@ class PageDownloads(PageBasepage):      # U
         self.gamedata["logger"].info("Download Key -> " + key);
         last = 0
         url = self.config["urls"][key]
+        self.gamedata["logger"].info("Download Key -> " + url);
         name = self.config["localnames"][key]
         with open(name, 'wb') as f:
             headers = { "User-Agent" : "Github / ESA.OS (Elite Ship Assistant)" }
@@ -417,6 +419,8 @@ class PageDownloads(PageBasepage):      # U
         j_stations = []     # Array
         j_bodies = []
         firsthundret = 0
+        if os.path.exists("daten/station-debug.json"):
+            os.remove("daten/station-debug.json")
         with open(self.config["localnames"]["galaxy_json"], "r") as f:
 #            galaxy = json.load(f)
             with open(self.config["localnames"]["bodies"], "w") as bodies:
@@ -437,6 +441,9 @@ class PageDownloads(PageBasepage):      # U
                             if self.config["distances"]["carrier"] == "no":
                                 if "Carrier" in station["type"]:
                                     continue   # erstmal keine Carrier
+                            # write station to station.json
+                            # with open("daten/station-debug.json", "a") as dump:
+                            #     dump.write(json.dumps(station) + '\n')
                             j_market = {}
                             # -- for key, value in station.items(): print(key)
                             # System: name - coords
@@ -445,7 +452,11 @@ class PageDownloads(PageBasepage):      # U
                             # Market: name - id
                             j_market["id"] = station["id"]
                             j_market["name"] = station["name"]
-                            j_market["ls"] = station["distanceToArrival"]
+                            if "distanceToArrival" in station:
+                                j_market["ls"] = station["distanceToArrival"]
+                            else:
+                                j_market["ls"] = 500
+                                self.gamedata["logger"].debug("missing 'distanceToArrival' for station '{0}'".format(station["name"]))
                             j_market["services"] = []
                             if "services" in station: 
                                 j_market["services"] = station["services"]
@@ -1455,7 +1466,7 @@ class PageFarming(PageBasepage):        # 100
             return "Analyse von {0} vollständig (Gattung {1} [Famile {2}])".format(variant, species, genus)
         self.biocount += 1
         return "Bio-Probe der Art {0} gesamelt ({1}/3)".format(variant, self.biocount)
-        
+
 
 
 
