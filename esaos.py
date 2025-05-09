@@ -318,9 +318,9 @@ def Event_FSDJump(entry):
         autoPage(getPrioPage())
 def Event_JetConeBoost(entry):
     gamedata["status"][0] = "   __  ____  ____     ____   __    __   ____  ____ "
-    gamedata["status"][1] = " _(  )(  __)(_  _)___(  _ \ /  \  /  \ / ___)(_  _)"
-    gamedata["status"][2] = "/ \) \ ) _)   )( (___)) _ ((  O )(  O )\___ \  )(  "
-    gamedata["status"][3] = "\____/(____) (__)    (____/ \__/  \__/ (____/ (__) "
+    gamedata["status"][1] = " _(  )(  __)(_  _)___(  _ \\ /  \\  /  \\ / ___)(_  _)"
+    gamedata["status"][2] = "/ \\) \\ ) _)   )( (___)) _ ((  O )(  O )\\___ \\  )(  "
+    gamedata["status"][3] = "\\____/(____) (__)    (____/ \\__/  \\__/ (____/ (__) "
     winstatus.update()
 
 def Event_SupercruiseExit(entry):
@@ -434,9 +434,9 @@ def Event_Loadout(entry):
     autoPage(6)
 def Event_GameOver(entry):
     gamedata["status"][0] = "  ___   __   _  _  ____     __   _  _  ____  ____ "
-    gamedata["status"][1] = " / __) / _\ ( \/ )(  __)   /  \ / )( \(  __)(  _ \\"
-    gamedata["status"][2] = "( (_ \/    \/ \/ \ ) _)   (  O )\ \/ / ) _)  )   /"
-    gamedata["status"][3] = " \___/\_/\_/\_)(_/(____)   \__/  \__/ (____)(__\_)"
+    gamedata["status"][1] = " / __) / _\\ ( \\/ )(  __)   /  \\ / )( \\(  __)(  _ \\"
+    gamedata["status"][2] = "( (_ \\/    \\/ \\/ \\ ) _)   (  O )\\ \\/ / ) _)  )   /"
+    gamedata["status"][3] = " \\___/\\_/\\_/\\_)(_/(____)   \\__/  \\__/ (____)(__\\_)"
     gamedata["status"][4] = ""
     winstatus.update()
 
@@ -541,9 +541,9 @@ def Event_ReceiveText(entry):
     addMessage(channel, message)
 def Event_ReceiveText_Pirat(entry):
     gamedata["status"][0] = "  __  __ _  ____  ____  ____  ____  __  ___  ____    _  _   "
-    gamedata["status"][1] = " (  )(  ( \(_  _)(  __)(  _ \(    \(  )/ __)(_  _)  / \/ \  "
-    gamedata["status"][2] = "  )( /    /  )(   ) _)  )   / ) D ( )(( (__   )(    \_/\_/  "
-    gamedata["status"][3] = " (__)\_)__) (__) (____)(__\_)(____/(__)\___) (__)   (_)(_)  "
+    gamedata["status"][1] = " (  )(  ( \\(_  _)(  __)(  _ \\(    \\(  )/ __)(_  _)  / \\/ \\  "
+    gamedata["status"][2] = "  )( /    /  )(   ) _)  )   / ) D ( )(( (__   )(    \\_/\\_/  "
+    gamedata["status"][3] = " (__)\\_)__) (__) (____)(__\\_)(____/(__)\\___) (__)   (_)(_)  "
     gamedata["status"][4] = ""
     winstatus.update()
 def Event_EscapeInterdiction(entry):
@@ -557,9 +557,9 @@ def Event_ProspectedAsteroid(entry):
     autoPage(8)
 def Event_AsteroidCracked(entry):
     gamedata["status"][0] = "     _      __   __    ___  __ _  ____   __  ____    _   "
-    gamedata["status"][1] = "    / \   _(  ) / _\  / __)(  / )(  _ \ /  \(_  _)  / \  "
-    gamedata["status"][2] = "    \_/  / \) \/    \( (__  )  (  ) __/(  O ) )(    \_/  "
-    gamedata["status"][3] = "    (_)  \____/\_/\_/ \___)(__\_)(__)   \__/ (__)   (_)  "
+    gamedata["status"][1] = "    / \\   _(  ) / _\\  / __)(  / )(  _ \\ /  \\(_  _)  / \\  "
+    gamedata["status"][2] = "    \\_/  / \\) \\/    \\( (__  )  (  ) __/(  O ) )(    \\_/  "
+    gamedata["status"][3] = "    (_)  \\____/\\_/\\_/ \\___)(__\\_)(__)   \\__/ (__)   (_)  "
     gamedata["status"][4] = ""
     winstatus.update()
 def Event_MiningRefined(entry):
@@ -719,9 +719,9 @@ def Event_ShieldState(entry):
             gamedata["status"][i] = ""
     else:
         gamedata["status"][0] = " ____  _  _  __  ____  __    ____    ____   __   _  _  __ _ "
-        gamedata["status"][1] = "/ ___)/ )( \(  )(  __)(  )  (    \  (    \ /  \ / )( \(  ( \\"
-        gamedata["status"][2] = "\___ \) __ ( )(  ) _) / (_/\ ) D (   ) D ((  O )\ /\ //    /"
-        gamedata["status"][3] = "(____/\_)(_/(__)(____)\____/(____/  (____/ \__/ (_/\_)\_)__)"
+        gamedata["status"][1] = "/ ___)/ )( \\(  )(  __)(  )  (    \\  (    \\ /  \\ / )( \\(  ( \\"
+        gamedata["status"][2] = "\\___ \\) __ ( )(  ) _) / (_/\\ ) D (   ) D ((  O )\\ /\\ //    /"
+        gamedata["status"][3] = "(____/\\_)(_/(__)(____)\\____/(____/  (____/ \\__/ (_/\\_)\\_)__)"
         gamedata["status"][4] = ""
     winstatus.update()
 
