@@ -114,7 +114,11 @@ class MyFileHandler(FileSystemEventHandler):
         self.config = config
         self.oldlog = ""
         self.logfile = None
-        self.openLogfile(config["eddir"]["lastlog"])
+        if "playback.log" in config["eddir"]["lastlog"]:
+            if os.path.exists(config["eddir"]["lastlog"]):
+                os.remove(config["eddir"]["lastlog"])
+        else:
+            self.openLogfile(config["eddir"]["lastlog"])
     def has_another_line(self, file):
         cur_pos = file.tell()
         does_it = bool(file.readline())
@@ -675,12 +679,17 @@ def Event_Scan(entry):
         planet["landable"] = False
     found = False
     for p in gamedata["fss"]["planets"]:
-        if p["id"] == planet["id"]:
+        if p["id"] == planet["id"]: 
             found = True
+    if config["pages"]["fss_block_cluster"] == "yes" and "Belt" in planet["type"]:
+        return
+    if config["pages"]["fss_only_landable"] == "yes" and planet["landable"] == False:
+        return
     if found == False:
         gamedata["fss"]["planets"].append(planet)
         with open(config["localnames"]["fss"], "w") as out:
             out.write(json.dumps(gamedata["fss"]["planets"]) + '\n')
+        gamedata["logger"].info(f"FSS-Scan: {planet}")
     if config["pages"]["onlydetailed"] == "no":
         autoPage(9)
     else:

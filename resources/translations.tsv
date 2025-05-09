@@ -18,6 +18,8 @@ PAGE_SETTINGS_MAIN_COLORS	Farben in der Darstellung nutzen	Use colors in the pre
 PAGE_SETTINGS_MAIN_EDMC	Autostart von EDMarketConnector	Autostart of EDMarketConnector
 PAGE_SETTINGS_MAIN_EVENTS	Events anzeigen (Debug-Funktion)	Show events (debug function)
 PAGE_SETTINGS_MAIN_FSS	VSS Seite nur bei manuellem Scan	FSS page only with manual scan
+PAGE_SETTINGS_MAIN_FSS_BLOCK_CLUSTER	Asteroiden Gürtel ignorieren	Ignore asteroid belt
+PAGE_SETTINGS_MAIN_FSS_ONLY_LANDABLE	nur landbare Planeten anzeigen	only show landable planets
 PAGE_SETTINGS_MAIN_LANG	Sprache	Language
 PAGE_SETTINGS_MAIN_TEMPSCALE	Temperatureinheit	Temperature unit
 PAGE_SETTINGS_SERVICE_TABNAME	Services	Services

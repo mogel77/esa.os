@@ -1208,7 +1208,7 @@ class PageFSS(PageBasepage):            # 9
                 additional = self.t("PAGE_FSS_HEADLINE_SCANNED").format(found = found, total = total)
         self.print(0, 2, self.t("PAGE_FSS_HEADLINE").format(system = self.gamedata["system"]["name"], additional = additional))
         self.sort_planets()
-        self.showPlanets()
+        self.show_planets()
         sortierung = ""
         if self.sortup:
             sortierung = "Up"
@@ -1331,7 +1331,7 @@ class PageFSS(PageBasepage):            # 9
         # es muss getauscht werden
         if changed == True:
             self.sort_planets_down()
-    def showPlanets(self):
+    def show_planets(self):
         if len(self.gamedata["fss"]["planets"]) < 18:
             self.starting = 0
         maximum = len(self.gamedata["fss"]["planets"])
@@ -1356,7 +1356,7 @@ class PageFSS(PageBasepage):            # 9
                 if id == s["id"]:
                     return s["Signals"]
             return None
-        def hasSignal(planet, signame):
+        def getSignalCount(planet, signame):
             signals = getSignals(planet["id"])
             if signals is None: return 0
             for s in signals:
@@ -1372,8 +1372,8 @@ class PageFSS(PageBasepage):            # 9
             name = name.replace("Belt Cluster ", "")
             name = name.replace(self.config["user"]["system"], "Belt Cluster")
         name = name.replace(self.config["user"]["system"], "Planet")
-        geo = "G" if hasSignal(planet, "$SAA_SignalType_Geological;") > 0 else "."
-        bio = "B" if hasSignal(planet, "$SAA_SignalType_Biological;") > 0 else "."
+        geo = getSignalCount(planet, "$SAA_SignalType_Geological;") if getSignalCount(planet, "$SAA_SignalType_Geological;") > 0 else "."
+        bio = getSignalCount(planet, "$SAA_SignalType_Biological;") if getSignalCount(planet, "$SAA_SignalType_Biological;") > 0 else "."
         return "{0}{1} {2}".format(geo, bio, name)
     def formatBodyType(self, planet):
         count = planet["type"].count(" ")
@@ -1595,7 +1595,7 @@ class PageSettingsMain(PageSettingsSubpage):
     def getSubPageName(self):
         return self.t("PAGE_SETTINGS_MAIN_TABNAME")
     def getOptionCount(self):
-        return 8
+        return 10
     def update(self):
         self.print(2, 5, self.t("PAGE_SETTINGS_MAIN_HEADLINE"))
         self.updateOptionLine(0, self.getOptionValueSelected(0), self.t("PAGE_SETTINGS_MAIN_AUTOPAGE"))
@@ -1606,6 +1606,8 @@ class PageSettingsMain(PageSettingsSubpage):
         self.updateOptionLine(5, self.getOptionValueSelected(5), self.t("PAGE_SETTINGS_MAIN_FSS"))
         self.updateOptionLine(6, self.getOptionValueSelected(6), self.t("PAGE_SETTINGS_MAIN_LANG"))
         self.updateOptionLine(7, self.getOptionValueSelected(7), self.t("PAGE_SETTINGS_MAIN_TEMPSCALE"))
+        self.updateOptionLine(8, self.getOptionValueSelected(8), self.t("PAGE_SETTINGS_MAIN_FSS_BLOCK_CLUSTER"))
+        self.updateOptionLine(9, self.getOptionValueSelected(9), self.t("PAGE_SETTINGS_MAIN_FSS_ONLY_LANDABLE"))
     def getOptionValueSelected(self, line):
         if line == 0: return self.config["pages"]["autopage"]
         if line == 1: return self.config["pages"]["priopage"]
@@ -1615,6 +1617,8 @@ class PageSettingsMain(PageSettingsSubpage):
         if line == 5: return self.config["pages"]["onlydetailed"]
         if line == 6: return self.config["user"]["language"]
         if line == 7: return self.config["user"]["tempscale"]
+        if line == 8: return self.config["pages"]["fss_block_cluster"]
+        if line == 9: return self.config["pages"]["fss_only_landable"]
     def setOptionValueSelected(self, line, option):
         if line == 0: self.config["pages"]["autopage"] = str(option)
         if line == 1: self.config["pages"]["priopage"] = str(option)
@@ -1624,6 +1628,8 @@ class PageSettingsMain(PageSettingsSubpage):
         if line == 5: self.config["pages"]["onlydetailed"] = str(option)
         if line == 6: self.config["user"]["language"] = str(option)
         if line == 7: self.config["user"]["tempscale"] = str(option)
+        if line == 8: self.config["pages"]["fss_block_cluster"] = str(option)
+        if line == 9: self.config["pages"]["fss_only_landable"] = str(option)
     def getOptionValuePossible(self, line):
         if line == 0: return self.optionYesNo
         if line == 1: return [ "mission", "cargo" ]
@@ -1633,6 +1639,8 @@ class PageSettingsMain(PageSettingsSubpage):
         if line == 5: return self.optionYesNo
         if line == 6: return self.gamedata["translations"]["languages"]
         if line == 7: return [ "Kelvin", "Celsius", "Fahrenheit", "Rankine", "Delisle", "Reaumur", "Newton", "Romer" ]
+        if line == 8: return self.optionYesNo
+        if line == 9: return self.optionYesNo
 class PageSettingsServices(PageSettingsSubpage):
     def __init__(self, config, gamedata, basepage):
         super().__init__(config, gamedata, basepage)

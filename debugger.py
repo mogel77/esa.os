@@ -4,6 +4,7 @@ import configparser
 import os
 import tempfile
 import logging
+import time
 
 import pages
 
@@ -95,7 +96,9 @@ class Playback:
 		with tempfile.NamedTemporaryFile(dir=tempfile.gettempdir(), suffix='.json', delete=False) as temp_file:
 			filename = temp_file.file.name
 			temp_file.write(entry.strip().encode('utf-8'))
-		os.system(f'xdg-open file:///{filename} &')
+		os.system(f'xdg-open {filename}')
+		time.sleep(1)
+		self.update()
 
 
 
@@ -125,7 +128,7 @@ def main_update_starsystem(stdscr):
 			filename = temp_file.file.name
 			temp_file.write(entry.strip().encode('utf-8'))
 		gamedata["logger"].info(f"open file {filename}")
-		os.system(f'xdg-open file:///{filename} &')
+		os.system(f'xdg-open {filename} &>/dev/null &')
 	page = pages.PageDownloads(config, gamedata)
 	try:
 		page.downloadAndUnpack()
@@ -143,8 +146,8 @@ def main_update_starsystem(stdscr):
 	
 	
 def main():
-	# wrapper(main_playback)
-	wrapper(main_update_starsystem)
+	wrapper(main_playback)
+	#wrapper(main_update_starsystem)
 
 if __name__ == "__main__":
 	config = configparser.ConfigParser()

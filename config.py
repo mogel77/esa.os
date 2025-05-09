@@ -123,6 +123,8 @@ def updateConfig():
     checkEntry('pages', 'services_known', '')       # Services die über alle Stationen angezeigt werden
     checkEntry('pages', 'coloring', 'yes')          # wenn Farben verwendet werden sollen
     checkEntry('pages', 'onlydetailed', 'yes')      # FSS nicht im Autoscan
+    checkEntry('pages', 'fss_block_cluster', 'yes') # keine Asteroiden im VSS anzeigen
+    checkEntry('pages', 'fss_only_landable', 'yes') # nur landbare Planeten im VSS anzeigen
 
     # alten & unnützen Kram löschen
     removeSection('twitter')
