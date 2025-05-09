@@ -1207,7 +1207,7 @@ class PageFSS(PageBasepage):            # 9
                 found = len(self.gamedata["fss"]["planets"])
                 additional = self.t("PAGE_FSS_HEADLINE_SCANNED").format(found = found, total = total)
         self.print(0, 2, self.t("PAGE_FSS_HEADLINE").format(system = self.gamedata["system"]["name"], additional = additional))
-        self.sortPlanets()
+        self.sort_planets()
         self.showPlanets()
         sortierung = ""
         if self.sortup:
@@ -1234,98 +1234,103 @@ class PageFSS(PageBasepage):            # 9
         if chr(key) == "r":
             self.sortup = not self.sortup
         self.update()
-    def sortPlanets(self):
+    def sort_planets(self):
         # erstmal ganz dumm Bubble-Sort
         if self.sortup:
-            self.sortPlanetsUp()
+            self.sort_planets_up()
         else:
-            self.sortPlanetsDown()
-    def sortPlanetsUp(self):
+            self.sort_planets_down()
+    def sort_planets_up(self):
         # self.gamedata["logger"].info("sortiere Planeten AUFsteigend")
         planets = self.gamedata["fss"]["planets"]
         changed = False
         for i in range(len(planets) - 1):
+            swap = False
             p1 = planets[i]
             p2 = planets[i + 1]
             match self.sortmode:    # ! DOUH ! irgendwie direkt mit den Key arbeiten
                 case PageFSS.SortMode.Name:
-                    changed = p1["name"] > p2["name"]
+                    swap = p1["name"] > p2["name"]
                 case PageFSS.SortMode.Gravitation:
                     # die Gravitation wird bei nicht landbaren Planeten ausgeblendet
                     # das muss sich auch auf die Sportierung auswirken - müssen runter fallen
                     if p1["landable"] and p2["landable"]:
-                        changed = p1["gravity"] > p2["gravity"]
+                        swap = p1["gravity"] > p2["gravity"]
                     else:
-                        changed = p2["landable"]
+                        swap = p2["landable"]
                 case PageFSS.SortMode.Temperatur:
-                    changed = p1["temp"] > p2["temp"]
+                    swap = p1["temp"] > p2["temp"]
                 case PageFSS.SortMode.Typ:
-                    changed = p1["type"] > p2["type"]
+                    swap = p1["type"] > p2["type"]
                 case PageFSS.SortMode.Eis:
                     if "Ice" in p1["composition"] and "Ice" in p2["composition"]:
-                        changed = p1["composition"]["Ice"] > p2["composition"]["Ice"]
+                        swap = p1["composition"]["Ice"] > p2["composition"]["Ice"]
                     else:
                         # in p1 oder p2 existiert eis - wenn Eis in p2 existiert
                         # dann wird getauscht - somit sollten alle leeren Planeten runter fallen
-                        changed = "Ice" in p2["composition"]
+                        swap = "Ice" in p2["composition"]
                 case PageFSS.SortMode.Fels:
                     if "Rock" in p1["composition"] and "Ice" in p2["composition"]:
-                        changed = p1["composition"]["Rock"] > p2["composition"]["Rock"]
+                        swap = p1["composition"]["Rock"] > p2["composition"]["Rock"]
                     else:
-                        changed = "Rock" in p2["composition"]
+                        swap = "Rock" in p2["composition"]
                 case PageFSS.SortMode.Metall:
                     if "Ice" in p1["composition"] and "Ice" in p2["composition"]:
-                        changed = p1["composition"]["Metal"] > p2["composition"]["Metal"]
+                        swap = p1["composition"]["Metal"] > p2["composition"]["Metal"]
                     else:
-                        changed = "Metal" in p2["composition"]
-            # es muss getauscht werden
-            if changed == True:
+                        swap = "Metal" in p2["composition"]
+            if swap == True:
                 planets[i] = p2
                 planets[i + 1] = p1
-                self.sortPlanetsUp()
-    def sortPlanetsDown(self):
+                changed = True
+        if changed == True:
+            self.sort_planets_up()
+    def sort_planets_down(self):
         # self.gamedata["logger"].info("sortiere Planeten ABsteigend")
         planets = self.gamedata["fss"]["planets"]
         changed = False
         for i in range(len(planets) - 1):
+            swap = False
             p1 = planets[i]
             p2 = planets[i + 1]
             match self.sortmode:    # ! DOUH ! irgendwie direkt mit den Key arbeiten
                 case PageFSS.SortMode.Name:
-                    changed = p1["name"] < p2["name"]
+                    swap = p1["name"] < p2["name"]
                 case PageFSS.SortMode.Gravitation:
                     # die Gravitation wird bei nicht landbaren Planeten ausgeblendet
                     # das muss sich auch auf die Sportierung auswirken - müssen runter fallen
                     if p1["landable"] and p2["landable"]:
-                        changed = p1["gravity"] < p2["gravity"]
+                        swap = p1["gravity"] < p2["gravity"]
                     else:
-                        changed = p2["landable"]
+                        swap = p2["landable"]
                 case PageFSS.SortMode.Temperatur:
-                    changed = p1["temp"] < p2["temp"]
+                    swap = p1["temp"] < p2["temp"]
                 case PageFSS.SortMode.Typ:
-                    changed = p1["type"] < p2["type"]
+                    swap = p1["type"] < p2["type"]
                 case PageFSS.SortMode.Eis:
                     if "Ice" in p1["composition"] and "Ice" in p2["composition"]:
-                        changed = p1["composition"]["Ice"] < p2["composition"]["Ice"]
+                        swap = p1["composition"]["Ice"] < p2["composition"]["Ice"]
                     else:
                         # in p1 oder p2 existiert eis - wenn Eis in p1 existiert
                         # dann wird getauscht - somit sollten alle leeren Planeten aufsteigen fallen
-                        changed = "Ice" in p2["composition"]
+                        swap = "Ice" in p2["composition"]
                 case PageFSS.SortMode.Fels:
                     if "Rock" in p1["composition"] and "Ice" in p2["composition"]:
-                        changed = p1["composition"]["Rock"] < p2["composition"]["Rock"]
+                        swap = p1["composition"]["Rock"] < p2["composition"]["Rock"]
                     else:
-                        changed = "Rock" in p2["composition"]
+                        swap = "Rock" in p2["composition"]
                 case PageFSS.SortMode.Metall:
                     if "Ice" in p1["composition"] and "Ice" in p2["composition"]:
-                        changed = p1["composition"]["Metal"] < p2["composition"]["Metal"]
+                        swap = p1["composition"]["Metal"] < p2["composition"]["Metal"]
                     else:
-                        changed = "Metal" in p2["composition"]
-            # es muss getauscht werden
-            if changed == True:
+                        swap = "Metal" in p2["composition"]
+            if swap == True:
                 planets[i] = p2
                 planets[i + 1] = p1
-                self.sortPlanetsDown()
+                changed = True
+        # es muss getauscht werden
+        if changed == True:
+            self.sort_planets_down()
     def showPlanets(self):
         if len(self.gamedata["fss"]["planets"]) < 18:
             self.starting = 0
