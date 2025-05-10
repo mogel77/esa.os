@@ -86,6 +86,7 @@ Es fehlt dadurch natürlich das von mir gewollte "Flair".
 
 * mal schauen das die Installation unter Windows einfacher wird
 * Credits komplett abfangen - leider kommt für jede Transaktion ein eigenes Event und alle habe ich an dere Stelle noch nicht "gefunden"
+* Architektur ist Mist und Python ist nicht meine Sprache, war ein kleines Projekt zum Kennenlernen
 
 
 

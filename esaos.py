@@ -13,7 +13,7 @@ from curses import wrapper
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from threading import Thread
-from datetime import datetime
+import random
 
 import tools
 import pages
@@ -22,11 +22,12 @@ from config import updateConfig
 from tools import getDictItem
 
 
-# { "timestamp":"2023-05-17T17:56:20Z", "event":"SAASignalsFound", "BodyName":"Wredgaei FN-Y c28-1 2", "SystemAddress":353764578042, "BodyID":3, "Signals":[ { "Type":"$SAA_SignalType_Biological;", "Type_Localised":"Biologisch", "Count":1 } ], "Genuses":[ { "Genus":"$Codex_Ent_Bacterial_Genus_Name;", "Genus_Localised":"Bacterium" } ] }
-# { "timestamp":"2023-05-17T17:25:48Z", "event":"SAASignalsFound", "BodyName":"Wredgaei FN-Y c28-1 2", "SystemAddress":353764578042, "BodyID":3, "Signals":[ { "Type":"$SAA_SignalType_Biological;", "Type_Localised":"Biologisch", "Count":1 } ], "Genuses":[ { "Genus":"$Codex_Ent_Bacterial_Genus_Name;", "Genus_Localised":"Bacterium" } ] }
-# { "timestamp":"2023-05-17T17:09:48Z", "event":"FSSBodySignals", "BodyName":"Wredgaei FN-Y c28-1 6", "BodyID":7, "SystemAddress":353764578042, "Signals":[ { "Type":"$SAA_SignalType_Biological;", "Type_Localised":"Biologisch", "Count":1 } ] }
-# { "timestamp":"2023-09-17T07:51:24Z", "event":"SAASignalsFound", "BodyName":"Kappa-1 Volantis B 7 a", "SystemAddress":211772499132, "BodyID":57, "Signals":[ { "Type":"$SAA_SignalType_Biological;", "Type_Localised":"Biologisch", "Count":2 }, { "Type":"$SAA_SignalType_Geological;", "Type_Localised":"Geologisch", "Count":3 } ], "Genuses":[ { "Genus":"$Codex_Ent_Brancae_Name;", "Genus_Localised":"Hirnbäume" }, { "Genus":"$Codex_Ent_Bacterial_Genus_Name;", "Genus_Localised":"Bacterium" } ] }
-# ?? { "timestamp":"2023-05-17T17:08:11Z", "event":"FSSDiscoveryScan", "Progress":0.292145, "BodyCount":8, "NonBodyCount":0, "SystemName":"Wredgaei FN-Y c28-1", "SystemAddress":353764578042 }
+
+
+
+# { "timestamp":"2025-05-10T05:10:56Z", "event":"CodexEntry", "EntryID":1300701, "Name":"$Codex_Ent_Standard_Rocky_Ice_No_Atmos_Name;", "Name_Localised":"Nicht terraformierbar", "SubCategory":"$Codex_SubCategory_Terrestrials;", "SubCategory_Localised":"Terrestrische Planeten", "Category":"$Codex_Category_StellarBodies;", "Category_Localised":"Himmelskörper", "Region":"$Codex_RegionName_20;", "Region_Localised":"Dryman's Point", "System":"Pyranaea KW-C c13-5", "SystemAddress":1500453806450, "BodyID":0, "IsNewEntry":true }
+
+
 
 
 
@@ -102,10 +103,11 @@ with open(config["localnames"]["translations"], encoding="utf-8") as csvfile:
         gamedata["translations"]["languages"].append(header[i])
 gamedata["logger"].info("Übersetzungen geladen")
 
-
 gamedata["hack"]["stdscr"] = curses.initscr()
 
 
+
+LOG_NAME_MISSING_EVENTS = "missing-events.log"
 
 
 
@@ -114,11 +116,86 @@ class MyFileHandler(FileSystemEventHandler):
         self.config = config
         self.oldlog = ""
         self.logfile = None
+        self.init_jumptable()
+        if os.path.exists(LOG_NAME_MISSING_EVENTS):
+            os.remove(LOG_NAME_MISSING_EVENTS)
         if "playback.log" in config["eddir"]["lastlog"]:
             if os.path.exists(config["eddir"]["lastlog"]):
                 os.remove(config["eddir"]["lastlog"])
         else:
             self.openLogfile(config["eddir"]["lastlog"])
+    def init_jumptable(self):
+        self.jumptable = {}
+        self.jumptable["Shutdown"] = Event_Shutdown
+        self.jumptable["SquadronStartup"] = Event_SquadronStartup
+        self.jumptable["LoadGame"] = Event_LoadGame
+        self.jumptable["Resurrect"] = Event_Resurrect
+        self.jumptable["NavRoute"] = Event_NavRoute
+        self.jumptable["NavRouteClear"] = Event_NavRouteClear
+        self.jumptable["FSDTarget"] = Event_FSDTarget
+        self.jumptable["FSDJump"] = Event_FSDJump
+        self.jumptable["StartJump"] = Event_StartJump
+        self.jumptable["JetConeBoost"] = Event_JetConeBoost
+        self.jumptable["SupercruiseExit"] = Event_SupercruiseExit
+        self.jumptable["SupercruiseEntry"] = Event_SupercruiseEntry
+        self.jumptable["Docked"] = Event_Docked
+        self.jumptable["DockingGranted"] = Event_DockingGranted
+        self.jumptable["DockingDenied"] = Event_DockingDenied
+        self.jumptable["Undocked"] = Event_Undocked
+        self.jumptable["Touchdown"] = Event_Touchdown
+        self.jumptable["Liftoff"] = Event_Liftoff
+        self.jumptable["Cargo"] = Event_Cargo
+        self.jumptable["StoredModules"] = Event_StoredModules
+        self.jumptable["StoredShips"] =  Event_StoredShips
+        self.jumptable["Loadout"] = Event_Loadout
+        self.jumptable["Died"] = Event_GameOver
+        self.jumptable["Materials"] = Event_Materials
+        self.jumptable["ShipLocker"] = Event_ShipLocker
+        self.jumptable["Missions"] = Event_Missions
+        self.jumptable["MissionAccepted"] = Event_MissionAccepted
+        self.jumptable["MissionRedirected"] = Event_MissionRedirected
+        self.jumptable["MissionCompleted"] = Event_MissionCompleted
+        self.jumptable["LeaveBody"] = Event_LeaveBody
+        self.jumptable["ApproachBody"] = Event_ApproachBody
+        self.jumptable["ApproachSettlement"] = Event_ApproachSettlement
+        self.jumptable["SAASignalsFound"] = Event_SAASignalsFound
+        self.jumptable["ProspectedAsteroid"] = Event_ProspectedAsteroid
+        self.jumptable["AsteroidCracked"] = Event_AsteroidCracked
+        self.jumptable["MiningRefined"] = Event_MiningRefined
+        self.jumptable["ReceiveText"] = Event_ReceiveText
+        self.jumptable["EscapeInterdiction"] = Event_EscapeInterdiction
+        self.jumptable["MarketBuy"] = Event_MarketBuy
+        self.jumptable["MarketSell"] = Event_MarketSell
+        self.jumptable["Repair"] = Event_Repair
+        self.jumptable["BuyDrones"] = Event_BuyDrones
+        self.jumptable["SellDrones"] = Event_SellDrones
+        self.jumptable["SellExplorationData"] = Event_SellExplorationData
+        self.jumptable["ShipyardBuy"] = Event_ShipyardBuy
+        self.jumptable["ShipyardSell"] = Event_ShipyardSell
+        self.jumptable["ShipyardTransfer"] = Event_ShipyardTransfer
+        self.jumptable["ModuleBuy"] = Event_ModuleBuy
+        self.jumptable["ModuleSell"] = Event_ModuleSell
+        self.jumptable["ModuleSellRemote"] = Event_ModuleSell
+        self.jumptable["ModuleStore"] =  Event_ModuleStore
+        self.jumptable["BuyExplorationData"] = Event_BuyExplorationData
+        self.jumptable["BuyTradeData"] = Event_BuyTradeData
+        self.jumptable["BuyAmmo"] =  Event_BuyAmmo
+        self.jumptable["CrewHire"] = Event_CrewHire
+        self.jumptable["FetchRemoteModule"] = Event_FetchRemoteModule
+        self.jumptable["RefuelAll"] = Event_RefuelAll
+        self.jumptable["RefuelPartial"] = Event_RefuelPartial
+        self.jumptable["RepairAll"] = Event_RepairAll
+        self.jumptable["RestockVehicle"] = Event_RestockVehicle
+        self.jumptable["PowerplayFastTrack"] = Event_PowerplayFastTrack
+        self.jumptable["NpcCrewPaidWage"] = Event_NpcCrewPaidWage
+        self.jumptable["Scan"] = Event_Scan
+        self.jumptable["FSSAllBodiesFound"] = Event_FSSAllBodiesFound
+        self.jumptable["FSSDiscoveryScan"] = Event_FSSDiscoveryScan
+        self.jumptable["FSSBodySignals"] = Event_FSSBodySignals
+        self.jumptable["FSSSignalDiscovered"] = Event_SignalDiscovered
+        self.jumptable["ShieldState"] = Event_ShieldState
+        self.jumptable["MaterialCollected"] = Event_MaterialCollected
+        self.jumptable["ScanOrganic"] = Event_ScanOrganic
     def has_another_line(self, file):
         cur_pos = file.tell()
         does_it = bool(file.readline())
@@ -139,89 +216,27 @@ class MyFileHandler(FileSystemEventHandler):
     def on_modified(self,  event):
         if not event.src_path.endswith(".log"): return
         if event.src_path != self.oldlog: self.openLogfile(event.src_path)
-        try:
-            gamedata["event"] = None
-            self.secureDispatch(event)
-        except Exception as ex:
-            #gamedata["logger"].error("{0}".format(ex), exc_info=True)
-            gamedata["logger"].exception(ex)
-            if not gamedata["event"] is None: gamedata["logger"].error(">>> {0}".format(json.dumps(gamedata["event"])))
-    def secureDispatch(self, event):
         while self.has_another_line(self.logfile):
-            global winevents, gamedata, winmenu
-            entry = json.loads(self.logfile.readline())
-            gamedata["event"] = entry
-            addMessage("debug", "EVENT: " + entry["event"])
-            if entry["event"] == "Shutdown": Event_Shutdown(entry)
-            if entry["event"] == "SquadronStartup": Event_SquadronStartup(entry)
-            if entry["event"] == "LoadGame": Event_LoadGame(entry)
-            if entry["event"] == "Resurrect": Event_Resurrect(entry)
-            if entry["event"] == "NavRoute": Event_NavRoute(entry)
-            if entry["event"] == "NavRouteClear": Event_NavRouteClear(entry)
-            if entry["event"] == "FSDTarget": Event_FSDTarget(entry)
-            if entry["event"] == "FSDJump": Event_FSDJump(entry)
-            if entry["event"] == "StartJump": Event_StartJump(entry)
-            if entry["event"] == "JetConeBoost": Event_JetConeBoost(entry)
-            if entry["event"] == "SupercruiseExit": Event_SupercruiseExit(entry)
-            if entry["event"] == "SupercruiseEntry": Event_SupercruiseEntry(entry)
-            if entry["event"] == "Docked": Event_Docked(entry)
-            if entry["event"] == "DockingGranted": Event_DockingGranted(entry)
-            if entry["event"] == "DockingDenied": Event_DockingDenied(entry)
-            if entry["event"] == "Undocked": Event_Undocked(entry)
-            if entry["event"] == "Touchdown": Event_Touchdown(entry)
-            if entry["event"] == "Liftoff": Event_Liftoff(entry)
-            if entry["event"] == "Cargo": Event_Cargo(entry)
-            if entry["event"] == "StoredModules": Event_StoredModules(entry)
-            if entry["event"] == "StoredShips": Event_StoredShips(entry)
-            if entry["event"] == "Loadout": Event_Loadout(entry)
-            if entry["event"] == "Died": Event_GameOver(entry)
-            if entry["event"] == "Materials": Event_Materials(entry)
-            if entry["event"] == "ShipLocker": Event_ShipLocker(entry)
-            if entry["event"] == "Missions": Event_Missions(entry)
-            if entry["event"] == "MissionAccepted": Event_MissionAccepted(entry)
-            if entry["event"] == "MissionRedirected": Event_MissionRedirected(entry)
-            if entry["event"] == "MissionCompleted": Event_MissionCompleted(entry)
-            if entry["event"] == "LeaveBody": Event_LeaveBody(entry)
-            if entry["event"] == "ApproachBody": Event_ApproachBody(entry)
-            if entry["event"] == "ApproachSettlement": Event_ApproachSettlement(entry)
-            if entry["event"] == "SAASignalsFound": Event_SAASignalsFound(entry)
-            if entry["event"] == "ProspectedAsteroid": Event_ProspectedAsteroid(entry)
-            if entry["event"] == "AsteroidCracked": Event_AsteroidCracked(entry)
-            if entry["event"] == "MiningRefined": Event_MiningRefined(entry)
-            if entry["event"] == "ReceiveText": Event_ReceiveText(entry)
-            if entry["event"] == "EscapeInterdiction": Event_EscapeInterdiction(entry)
-            if entry["event"] == "MarketBuy": Event_MarketBuy(entry)
-            if entry["event"] == "MarketSell": Event_MarketSell(entry)
-            if entry["event"] == "Repair": Event_Repair(entry)
-            if entry["event"] == "BuyDrones": Event_BuyDrones(entry)
-            if entry["event"] == "SellDrones": Event_SellDrones(entry)
-            if entry["event"] == "SellExplorationData": Event_SellExplorationData(entry)
-            if entry["event"] == "ShipyardBuy": Event_ShipyardBuy(entry)
-            if entry["event"] == "ShipyardSell": Event_ShipyardSell(entry)
-            if entry["event"] == "ShipyardTransfer": Event_ShipyardTransfer(entry)
-            if entry["event"] == "ModuleBuy": Event_ModuleBuy(entry)
-            if entry["event"] == "ModuleSell": Event_ModuleSell(entry)
-            if entry["event"] == "ModuleSellRemote": Event_ModuleSell(entry)
-            if entry["event"] == "ModuleStore": Event_ModuleStore(entry)
-            if entry["event"] == "BuyExplorationData": Event_BuyExplorationData(entry)
-            if entry["event"] == "BuyTradeData": Event_BuyTradeData(entry)
-            if entry["event"] == "BuyAmmo": Event_BuyAmmo(entry)
-            if entry["event"] == "CrewHire": Event_CrewHire(entry)
-            if entry["event"] == "FetchRemoteModule": Event_FetchRemoteModule(entry)
-            if entry["event"] == "RefuelAll": Event_RefuelAll(entry)
-            if entry["event"] == "RefuelPartial": Event_RefuelPartial(entry)
-            if entry["event"] == "RepairAll": Event_RepairAll(entry)
-            if entry["event"] == "RestockVehicle": Event_RestockVehicle(entry)
-            if entry["event"] == "PowerplayFastTrack": Event_PowerplayFastTrack(entry)
-            if entry["event"] == "NpcCrewPaidWage": Event_NpcCrewPaidWage(entry)
-            if entry["event"] == "Scan": Event_Scan(entry)
-            if entry["event"] == "FSSAllBodiesFound": Event_FSSAllBodiesFound(entry)
-            if entry["event"] == "FSSDiscoveryScan": Event_FSSDiscoveryScan(entry)
-            if entry["event"] == "FSSBodySignals": Event_FSSBodySignals(entry)
-            if entry["event"] == "ShieldState": Event_ShieldState(entry)
-            if entry["event"] == "MaterialCollected": Event_MaterialCollected(entry)
-            if entry["event"] == "ScanOrganic": Event_ScanOrganic(entry)
-            winmenu.update()
+            try:
+                gamedata["event"] = None
+                self.secure_dispatch(event)
+            except Exception as ex:
+                #gamedata["logger"].error("{0}".format(ex), exc_info=True)
+                gamedata["logger"].exception(ex)
+                if gamedata["event"] is not None: gamedata["logger"].error(">>> {0}".format(json.dumps(gamedata["event"])))
+    def secure_dispatch(self, event):
+        global winevents, gamedata, winmenu
+        entry = json.loads(self.logfile.readline())
+        gamedata["event"] = entry
+        name = entry["event"]
+        addMessage("debug", f"EVENT: {name}")
+        if name in self.jumptable:
+            self.jumptable[name](entry)
+        else:
+            # write event to missing-events.log
+            with open(LOG_NAME_MISSING_EVENTS, "a") as f:
+                f.write(json.dumps(entry) + "\n")
+        winmenu.update()
 
 
 
@@ -720,6 +735,32 @@ def Event_FSSBodySignals(entry):
     with open(config["localnames"]["fsssignals"], "w") as out:
         out.write(json.dumps(gamedata["fss"]["signals"]) + '\n')
     # -- nicht nötig -- autoPage(9)
+def Event_SignalDiscovered(entry):
+    global gamedata
+    planet = {}
+    # planet["name"] = entry["SignalName_Localised"]
+    planet["name"] = "Star Phenomenon"
+    planet["id"] = random.randint(1000000, 9999999)
+    planet["type"] = "Unknown"
+    planet["gravity"] = 0
+    planet["temp"] = 0
+    planet["composition"] = { }
+    planet["materials"] = { }
+    planet["landable"] = False
+    found = False
+    for p in gamedata["fss"]["planets"]:
+        if p["id"] == planet["id"]: 
+            found = True
+    if found == False:
+        gamedata["fss"]["planets"].append(planet)
+        with open(config["localnames"]["fss"], "w") as out:
+            out.write(json.dumps(gamedata["fss"]["planets"]) + '\n')
+        gamedata["logger"].info(f"FSS-Scan: {planet}")
+    if config["pages"]["onlydetailed"] == "no":
+        autoPage(9)
+    else:
+        if entry["ScanType"] == "Detailed":
+            autoPage(9)
 
 def Event_ShieldState(entry):
     if not "ShieldsUp" in entry: return
@@ -735,7 +776,6 @@ def Event_ShieldState(entry):
     winstatus.update()
 
 
-# { "timestamp":"2022-10-16T19:06:26Z", "event":"MissionAbandoned", "Name":"Mission_Collect_name", "MissionID":895117670 }
 
 
 
